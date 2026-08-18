@@ -77,11 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "AegisGuard — Signal-Free Authentication" },
+      {
+        name: "description",
+        content:
+          "AegisGuard secures your accounts with device-based TOTP authentication that works without mobile signal.",
+      },
+      { name: "author", content: "AegisGuard" },
+      { property: "og:title", content: "AegisGuard — Signal-Free Authentication" },
+      {
+        property: "og:description",
+        content: "Device-based TOTP security that works even when SMS does not.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
