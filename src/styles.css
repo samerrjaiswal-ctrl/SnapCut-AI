@@ -242,3 +242,95 @@
 .animate-fade-in-up {
   animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* ── Interaction: transitions, transforms, glow ────────────────────── */
+
+@utility interactive {
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease,
+    color 0.2s ease;
+}
+
+@utility lift {
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+  &:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in oklch, var(--cyan) 35%, transparent);
+    box-shadow:
+      0 18px 40px -20px color-mix(in oklch, var(--violet) 70%, transparent),
+      0 0 24px -6px color-mix(in oklch, var(--cyan) 35%, transparent);
+  }
+}
+
+@utility glow-hover {
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s ease,
+    filter 0.3s ease;
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--cyan) 30%, transparent),
+      0 10px 30px -12px color-mix(in oklch, var(--violet) 85%, transparent),
+      0 0 26px -4px color-mix(in oklch, var(--cyan) 45%, transparent);
+  }
+  &:active {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+@utility glow-ring {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--cyan) 25%, transparent),
+    0 0 28px -8px color-mix(in oklch, var(--cyan) 55%, transparent);
+}
+
+@utility nav-item {
+  position: relative;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  &:hover {
+    transform: translateX(3px);
+  }
+}
+
+@utility icon-spin-hover {
+  & svg {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  &:hover svg {
+    transform: rotate(-12deg) scale(1.12);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.animate-shimmer {
+  background-size: 200% 200%;
+  animation: shimmer 4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
