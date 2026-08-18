@@ -45,6 +45,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand-foreground: var(--brand-foreground);
   --color-violet: var(--violet);
   --color-electric: var(--electric);
   --color-cyan: var(--cyan);
@@ -86,6 +87,7 @@
   /* Brand */
   --primary: oklch(0.82 0.1 293);
   --primary-foreground: oklch(0.26 0.11 289);
+  --brand-foreground: oklch(0.99 0 0);
   --violet: oklch(0.45 0.21 285);
   --electric: oklch(0.6 0.19 267);
   --cyan: oklch(0.78 0.13 214);
