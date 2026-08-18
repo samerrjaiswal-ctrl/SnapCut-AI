@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Bell, LayoutDashboard, ShieldCheck, User } from "lucide-react";
+import { Bell, Home, LayoutDashboard, ShieldCheck, User } from "lucide-react";
 import type { ReactNode } from "react";
 
 const items = [
+  { to: "/", label: "Home", icon: Home },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/security", label: "Security", icon: ShieldCheck },
   { to: "/totp-setup", label: "Authenticator", icon: User },
@@ -13,7 +14,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex max-w-[1440px]">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-6 lg:flex">
-          <Link to="/" className="mb-10 flex items-center gap-2">
+          <Link to="/" className="glow-hover icon-spin-hover mb-10 flex items-center gap-2 rounded-lg">
             <ShieldCheck className="size-7 text-sidebar-primary" />
             <span className="text-xl font-bold text-sidebar-primary">AegisGuard</span>
           </Link>
@@ -28,7 +29,8 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
               <Link
                 key={item.to}
                 to={item.to}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                activeOptions={{ exact: item.to === "/" }}
+                className="nav-item flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 activeProps={{
                   className: "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
                 }}
@@ -39,7 +41,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
             ))}
           </nav>
 
-          <div className="mt-auto rounded-xl bg-brand-gradient p-4">
+          <div className="glow-hover animate-shimmer mt-auto rounded-xl bg-brand-gradient p-4">
             <p className="text-sm font-semibold text-brand-foreground">Upgrade Plan</p>
             <p className="mt-1 text-xs text-brand-foreground/80">
               Unlock passkeys and team recovery.
@@ -55,10 +57,18 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
                 <span className="size-2 rounded-full bg-success" />
                 System Secure
               </span>
+              <Link
+                to="/"
+                aria-label="Go to home page"
+                className="glass glass-hover glow-hover icon-spin-hover inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground"
+              >
+                <Home className="size-4" />
+                <span className="hidden sm:inline">Home</span>
+              </Link>
               <button
                 type="button"
                 aria-label="Notifications"
-                className="glass glass-hover rounded-full p-2 text-muted-foreground"
+                className="glass glass-hover glow-hover rounded-full p-2 text-muted-foreground"
               >
                 <Bell className="size-5" />
               </button>
@@ -75,7 +85,8 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
               <Link
                 key={item.to}
                 to={item.to}
-                className="flex flex-col items-center gap-1 text-xs text-muted-foreground"
+                activeOptions={{ exact: item.to === "/" }}
+                className="interactive flex flex-col items-center gap-1 text-xs text-muted-foreground hover:-translate-y-0.5 hover:text-primary"
                 activeProps={{ className: "text-primary" }}
               >
                 <item.icon className="size-5" />

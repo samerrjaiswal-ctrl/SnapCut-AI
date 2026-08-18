@@ -113,7 +113,7 @@ function HowItWorks() {
               </p>
               <div className="flex flex-col gap-4">
                 {facts.map((fact) => (
-                  <div key={fact.title} className="glass rounded-xl p-5">
+                  <div key={fact.title} className="glass lift rounded-xl p-5">
                     <h3 className="mb-1 font-semibold text-foreground">{fact.title}</h3>
                     <p className="text-sm text-muted-foreground">{fact.body}</p>
                   </div>
@@ -132,7 +132,7 @@ function HowItWorks() {
               </p>
               <Link
                 to="/totp-setup"
-                className="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-6 py-3 font-semibold text-brand-foreground transition hover:-translate-y-0.5"
+                className="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-6 py-3 font-semibold text-brand-foreground transition hover:-translate-y-0.5 glow-hover"
               >
                 Set up your authenticator
                 <ArrowRight className="size-5" />

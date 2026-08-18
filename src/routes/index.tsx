@@ -103,7 +103,7 @@ function Landing() {
               <div className="mb-8 flex flex-col gap-4 sm:flex-row">
                 <Link
                   to="/register"
-                  className="group inline-flex items-center justify-center gap-2 rounded-lg bg-brand-gradient px-8 py-4 font-semibold text-brand-foreground transition hover:-translate-y-0.5 hover:shadow-[0_0_15px_var(--cyan)]"
+                  className="group inline-flex items-center justify-center gap-2 rounded-lg bg-brand-gradient px-8 py-4 font-semibold text-brand-foreground transition hover:-translate-y-0.5 hover:shadow-[0_0_15px_var(--cyan)] glow-hover"
                 >
                   Get Started
                   <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
@@ -235,7 +235,7 @@ function Landing() {
                 </p>
                 <Link
                   to="/register"
-                  className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-8 py-4 font-semibold text-brand-foreground transition hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-8 py-4 font-semibold text-brand-foreground transition hover:-translate-y-0.5 glow-hover"
                 >
                   Create your account
                   <ArrowRight className="size-5" />

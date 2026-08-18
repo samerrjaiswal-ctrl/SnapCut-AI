@@ -14,7 +14,7 @@ export function SiteHeader() {
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container-page flex items-center justify-between py-4">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="glow-hover icon-spin-hover flex items-center gap-2 rounded-lg">
           <ShieldCheck className="size-7 text-primary" />
           <span className="text-2xl font-bold text-primary">AegisGuard</span>
         </Link>
@@ -24,7 +24,7 @@ export function SiteHeader() {
             <Link
               key={link.to}
               to={link.to}
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              className="interactive relative text-muted-foreground hover:-translate-y-0.5 hover:text-foreground"
               activeProps={{ className: "text-primary font-semibold" }}
               activeOptions={{ exact: link.to === "/" }}
             >
@@ -42,7 +42,7 @@ export function SiteHeader() {
           </Link>
           <Link
             to="/register"
-            className="rounded-full bg-accent px-6 py-2 font-medium text-accent-foreground transition hover:opacity-85"
+            className="glow-hover rounded-full bg-accent px-6 py-2 font-medium text-accent-foreground"
           >
             Get Started
           </Link>
@@ -66,7 +66,7 @@ export function SiteHeader() {
                 key={link.to}
                 to={link.to}
                 onClick={() => setOpen(false)}
-                className="text-muted-foreground"
+                className="interactive text-muted-foreground hover:translate-x-1 hover:text-foreground"
               >
                 {link.label}
               </Link>
