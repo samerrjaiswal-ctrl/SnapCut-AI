@@ -14,6 +14,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as TotpSetupRouteImport } from './routes/totp-setup'
 import { Route as VerifyRouteImport } from './routes/verify'
 
@@ -42,6 +43,11 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TotpSetupRoute = TotpSetupRouteImport.update({
   id: '/totp-setup',
   path: '/totp-setup',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/recovery-codes': typeof RecoveryCodesRoute
   '/register': typeof RegisterRoute
+  '/security': typeof SecurityRoute
   '/totp-setup': typeof TotpSetupRoute
   '/verify': typeof VerifyRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/recovery-codes': typeof RecoveryCodesRoute
   '/register': typeof RegisterRoute
+  '/security': typeof SecurityRoute
   '/totp-setup': typeof TotpSetupRoute
   '/verify': typeof VerifyRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/recovery-codes': typeof RecoveryCodesRoute
   '/register': typeof RegisterRoute
+  '/security': typeof SecurityRoute
   '/totp-setup': typeof TotpSetupRoute
   '/verify': typeof VerifyRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/recovery-codes'
     | '/register'
+    | '/security'
     | '/totp-setup'
     | '/verify'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/recovery-codes'
     | '/register'
+    | '/security'
     | '/totp-setup'
     | '/verify'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/recovery-codes'
     | '/register'
+    | '/security'
     | '/totp-setup'
     | '/verify'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   RecoveryCodesRoute: typeof RecoveryCodesRoute
   RegisterRoute: typeof RegisterRoute
+  SecurityRoute: typeof SecurityRoute
   TotpSetupRoute: typeof TotpSetupRoute
   VerifyRoute: typeof VerifyRoute
 }
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/totp-setup': {
       id: '/totp-setup'
       path: '/totp-setup'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   RecoveryCodesRoute: RecoveryCodesRoute,
   RegisterRoute: RegisterRoute,
+  SecurityRoute: SecurityRoute,
   TotpSetupRoute: TotpSetupRoute,
   VerifyRoute: VerifyRoute,
 }
