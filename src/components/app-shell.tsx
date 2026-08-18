@@ -29,6 +29,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
               <Link
                 key={item.to}
                 to={item.to}
+                activeOptions={{ exact: item.to === "/" }}
                 className="nav-item flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 activeProps={{
                   className: "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
@@ -84,6 +85,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
               <Link
                 key={item.to}
                 to={item.to}
+                activeOptions={{ exact: item.to === "/" }}
                 className="interactive flex flex-col items-center gap-1 text-xs text-muted-foreground hover:-translate-y-0.5 hover:text-primary"
                 activeProps={{ className: "text-primary" }}
               >

@@ -50,7 +50,7 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="glass glow-cyan rounded-2xl p-6 lg:col-span-2">
+        <div className="glass lift glow-cyan rounded-2xl p-6 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div>
               <div className="mb-4 flex items-center gap-3">
@@ -73,7 +73,7 @@ function Dashboard() {
               </ul>
               <Link
                 to="/security"
-                className="mt-6 inline-flex rounded-lg bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:-translate-y-0.5"
+                className="mt-6 inline-flex rounded-lg bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:-translate-y-0.5 glow-hover"
               >
                 Improve Security
               </Link>
@@ -83,7 +83,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="glass rounded-2xl p-6">
+        <div className="glass lift rounded-2xl p-6">
           <h3 className="mb-4 font-semibold text-foreground">Your Devices</h3>
           <div className="flex flex-col gap-3">
             {devices.map((device) => (
@@ -111,7 +111,7 @@ function Dashboard() {
           </Link>
         </div>
 
-        <div className="glass rounded-2xl p-6 lg:col-span-2">
+        <div className="glass lift rounded-2xl p-6 lg:col-span-2">
           <h3 className="mb-4 font-semibold text-foreground">Recent Activity</h3>
           <ul className="flex flex-col divide-y divide-border">
             {activity.map((item) => (
@@ -131,7 +131,7 @@ function Dashboard() {
           </ul>
         </div>
 
-        <div className="glass rounded-2xl p-6">
+        <div className="glass lift rounded-2xl p-6">
           <h3 className="mb-4 font-semibold text-foreground">Authenticator TOTP</h3>
           <div className="rounded-xl border border-border bg-white/5 p-4 text-center">
             <p className="font-mono text-3xl font-bold tracking-widest text-foreground">••••••</p>

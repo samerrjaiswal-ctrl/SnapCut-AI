@@ -56,7 +56,7 @@ function TotpSetup() {
         </ol>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="glass rounded-2xl p-8 text-center">
+          <div className="glass lift rounded-2xl p-8 text-center">
             <p className="mb-6 text-muted-foreground">
               Scan this QR code using your authenticator app.
             </p>
@@ -75,12 +75,12 @@ function TotpSetup() {
             ) : null}
           </div>
 
-          <div className="glass glow-cyan rounded-2xl p-8">
+          <div className="glass lift glow-cyan rounded-2xl p-8">
             <p className="mb-6 text-center text-muted-foreground">Enter 6-digit code to verify</p>
             <OtpInput />
             <Link
               to="/recovery-codes"
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-gradient py-3 font-semibold text-brand-foreground transition hover:-translate-y-0.5 hover:shadow-[0_0_15px_var(--cyan)]"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-gradient py-3 font-semibold text-brand-foreground transition hover:-translate-y-0.5 hover:shadow-[0_0_15px_var(--cyan)] glow-hover"
             >
               <Lock className="size-5" />
               Verify Code
