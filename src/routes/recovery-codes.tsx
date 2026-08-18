@@ -117,7 +117,7 @@ function RecoveryCodes() {
 
         <Link
           to="/dashboard"
-          className="mt-4 flex items-center justify-center rounded-lg bg-brand-gradient py-3 font-semibold text-primary-foreground transition hover:-translate-y-0.5 hover:shadow-[0_0_15px_var(--cyan)]"
+          className="mt-4 flex items-center justify-center rounded-lg bg-brand-gradient py-3 font-semibold text-brand-foreground transition hover:-translate-y-0.5 hover:shadow-[0_0_15px_var(--cyan)]"
         >
           I&apos;ve Saved Them
         </Link>

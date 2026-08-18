@@ -40,8 +40,8 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
           </nav>
 
           <div className="mt-auto rounded-xl bg-brand-gradient p-4">
-            <p className="text-sm font-semibold text-primary-foreground">Upgrade Plan</p>
-            <p className="mt-1 text-xs text-primary-foreground/80">
+            <p className="text-sm font-semibold text-brand-foreground">Upgrade Plan</p>
+            <p className="mt-1 text-xs text-brand-foreground/80">
               Unlock passkeys and team recovery.
             </p>
           </div>

@@ -73,7 +73,7 @@ function Dashboard() {
               </ul>
               <Link
                 to="/security"
-                className="mt-6 inline-flex rounded-lg bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:-translate-y-0.5"
+                className="mt-6 inline-flex rounded-lg bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:-translate-y-0.5"
               >
                 Improve Security
               </Link>

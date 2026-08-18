@@ -43,7 +43,7 @@ function TotpSetup() {
               <span
                 className={`grid size-9 shrink-0 place-items-center rounded-full font-semibold ${
                   i === 0
-                    ? "bg-brand-gradient text-primary-foreground"
+                    ? "bg-brand-gradient text-brand-foreground"
                     : "glass text-muted-foreground"
                 }`}
               >
@@ -80,7 +80,7 @@ function TotpSetup() {
             <OtpInput />
             <Link
               to="/recovery-codes"
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-gradient py-3 font-semibold text-primary-foreground transition hover:-translate-y-0.5 hover:shadow-[0_0_15px_var(--cyan)]"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-gradient py-3 font-semibold text-brand-foreground transition hover:-translate-y-0.5 hover:shadow-[0_0_15px_var(--cyan)]"
             >
               <Lock className="size-5" />
               Verify Code

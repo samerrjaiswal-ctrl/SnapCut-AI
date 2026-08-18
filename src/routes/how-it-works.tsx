@@ -132,7 +132,7 @@ function HowItWorks() {
               </p>
               <Link
                 to="/totp-setup"
-                className="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-6 py-3 font-semibold text-primary-foreground transition hover:-translate-y-0.5"
+                className="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-6 py-3 font-semibold text-brand-foreground transition hover:-translate-y-0.5"
               >
                 Set up your authenticator
                 <ArrowRight className="size-5" />
