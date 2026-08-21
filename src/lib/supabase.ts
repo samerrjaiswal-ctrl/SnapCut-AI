@@ -7,10 +7,16 @@ export function isSupabaseConfigured() {
   return Boolean(supabaseUrl && supabaseAnonKey);
 }
 
+export function getAuthRedirectTo() {
+  if (typeof window === "undefined") return undefined;
+  return `${window.location.origin}/auth/callback`;
+}
+
 export const supabase = createClient(supabaseUrl || "https://example.supabase.co", supabaseAnonKey || "public-anon-key", {
   auth: {
     persistSession: typeof window !== "undefined",
     autoRefreshToken: typeof window !== "undefined",
     detectSessionInUrl: typeof window !== "undefined",
+    flowType: "pkce",
   },
 });

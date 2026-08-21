@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
-import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { getAuthRedirectTo, isSupabaseConfigured, supabase } from "@/lib/supabase";
 
 export type AppSession = {
   userId: string;
@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: { full_name: name },
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: getAuthRedirectTo(),
       },
     });
     if (error) throw new Error(getAuthErrorMessage(error, "Unable to create account. Please try again."));
@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: getAuthRedirectTo(),
       },
     });
     if (error) {
