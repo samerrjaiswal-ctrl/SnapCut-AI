@@ -10,17 +10,32 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccessRouteImport } from './routes/access'
+import { Route as CollageMakerRouteImport } from './routes/collage-maker'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as HowItWorksRouteImport } from './routes/how-it-works'
-import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as SecurityRouteImport } from './routes/security'
-import { Route as TotpSetupRouteImport } from './routes/totp-setup'
-import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as HistoryRouteImport } from './routes/history'
+import { Route as ImageToTextRouteImport } from './routes/image-to-text'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as RemoveTextRouteImport } from './routes/remove-text'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ApiExtractTextRouteImport } from './routes/api/extract-text'
+import { Route as ApiRemoveTextRouteImport } from './routes/api/remove-text'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccessRoute = AccessRouteImport.update({
+  id: '/access',
+  path: '/access',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollageMakerRoute = CollageMakerRouteImport.update({
+  id: '/collage-maker',
+  path: '/collage-maker',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -28,110 +43,160 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HowItWorksRoute = HowItWorksRouteImport.update({
-  id: '/how-it-works',
-  path: '/how-it-works',
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RecoveryCodesRoute = RecoveryCodesRouteImport.update({
-  id: '/recovery-codes',
-  path: '/recovery-codes',
+const ImageToTextRoute = ImageToTextRouteImport.update({
+  id: '/image-to-text',
+  path: '/image-to-text',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SecurityRoute = SecurityRouteImport.update({
-  id: '/security',
-  path: '/security',
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TotpSetupRoute = TotpSetupRouteImport.update({
-  id: '/totp-setup',
-  path: '/totp-setup',
+const RemoveTextRoute = RemoveTextRouteImport.update({
+  id: '/remove-text',
+  path: '/remove-text',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VerifyRoute = VerifyRouteImport.update({
-  id: '/verify',
-  path: '/verify',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiExtractTextRoute = ApiExtractTextRouteImport.update({
+  id: '/api/extract-text',
+  path: '/api/extract-text',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRemoveTextRoute = ApiRemoveTextRouteImport.update({
+  id: '/api/remove-text',
+  path: '/api/remove-text',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/access': typeof AccessRoute
+  '/collage-maker': typeof CollageMakerRoute
   '/dashboard': typeof DashboardRoute
-  '/how-it-works': typeof HowItWorksRoute
-  '/recovery-codes': typeof RecoveryCodesRoute
-  '/register': typeof RegisterRoute
-  '/security': typeof SecurityRoute
-  '/totp-setup': typeof TotpSetupRoute
-  '/verify': typeof VerifyRoute
+  '/history': typeof HistoryRoute
+  '/image-to-text': typeof ImageToTextRoute
+  '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
+  '/remove-text': typeof RemoveTextRoute
+  '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
+  '/api/extract-text': typeof ApiExtractTextRoute
+  '/api/remove-text': typeof ApiRemoveTextRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/access': typeof AccessRoute
+  '/collage-maker': typeof CollageMakerRoute
   '/dashboard': typeof DashboardRoute
-  '/how-it-works': typeof HowItWorksRoute
-  '/recovery-codes': typeof RecoveryCodesRoute
-  '/register': typeof RegisterRoute
-  '/security': typeof SecurityRoute
-  '/totp-setup': typeof TotpSetupRoute
-  '/verify': typeof VerifyRoute
+  '/history': typeof HistoryRoute
+  '/image-to-text': typeof ImageToTextRoute
+  '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
+  '/remove-text': typeof RemoveTextRoute
+  '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
+  '/api/extract-text': typeof ApiExtractTextRoute
+  '/api/remove-text': typeof ApiRemoveTextRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/access': typeof AccessRoute
+  '/collage-maker': typeof CollageMakerRoute
   '/dashboard': typeof DashboardRoute
-  '/how-it-works': typeof HowItWorksRoute
-  '/recovery-codes': typeof RecoveryCodesRoute
-  '/register': typeof RegisterRoute
-  '/security': typeof SecurityRoute
-  '/totp-setup': typeof TotpSetupRoute
-  '/verify': typeof VerifyRoute
+  '/history': typeof HistoryRoute
+  '/image-to-text': typeof ImageToTextRoute
+  '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
+  '/remove-text': typeof RemoveTextRoute
+  '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
+  '/api/extract-text': typeof ApiExtractTextRoute
+  '/api/remove-text': typeof ApiRemoveTextRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/access'
+    | '/collage-maker'
     | '/dashboard'
-    | '/how-it-works'
-    | '/recovery-codes'
-    | '/register'
-    | '/security'
-    | '/totp-setup'
-    | '/verify'
+    | '/history'
+    | '/image-to-text'
+    | '/login'
+    | '/pricing'
+    | '/remove-text'
+    | '/settings'
+    | '/signup'
+    | '/api/extract-text'
+    | '/api/remove-text'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/access'
+    | '/collage-maker'
     | '/dashboard'
-    | '/how-it-works'
-    | '/recovery-codes'
-    | '/register'
-    | '/security'
-    | '/totp-setup'
-    | '/verify'
+    | '/history'
+    | '/image-to-text'
+    | '/login'
+    | '/pricing'
+    | '/remove-text'
+    | '/settings'
+    | '/signup'
+    | '/api/extract-text'
+    | '/api/remove-text'
   id:
     | '__root__'
     | '/'
+    | '/access'
+    | '/collage-maker'
     | '/dashboard'
-    | '/how-it-works'
-    | '/recovery-codes'
-    | '/register'
-    | '/security'
-    | '/totp-setup'
-    | '/verify'
+    | '/history'
+    | '/image-to-text'
+    | '/login'
+    | '/pricing'
+    | '/remove-text'
+    | '/settings'
+    | '/signup'
+    | '/api/extract-text'
+    | '/api/remove-text'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccessRoute: typeof AccessRoute
+  CollageMakerRoute: typeof CollageMakerRoute
   DashboardRoute: typeof DashboardRoute
-  HowItWorksRoute: typeof HowItWorksRoute
-  RecoveryCodesRoute: typeof RecoveryCodesRoute
-  RegisterRoute: typeof RegisterRoute
-  SecurityRoute: typeof SecurityRoute
-  TotpSetupRoute: typeof TotpSetupRoute
-  VerifyRoute: typeof VerifyRoute
+  HistoryRoute: typeof HistoryRoute
+  ImageToTextRoute: typeof ImageToTextRoute
+  LoginRoute: typeof LoginRoute
+  PricingRoute: typeof PricingRoute
+  RemoveTextRoute: typeof RemoveTextRoute
+  SettingsRoute: typeof SettingsRoute
+  SignupRoute: typeof SignupRoute
+  ApiExtractTextRoute: typeof ApiExtractTextRoute
+  ApiRemoveTextRoute: typeof ApiRemoveTextRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -143,6 +208,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/access': {
+      id: '/access'
+      path: '/access'
+      fullPath: '/access'
+      preLoaderRoute: typeof AccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collage-maker': {
+      id: '/collage-maker'
+      path: '/collage-maker'
+      fullPath: '/collage-maker'
+      preLoaderRoute: typeof CollageMakerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -150,46 +229,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/how-it-works': {
-      id: '/how-it-works'
-      path: '/how-it-works'
-      fullPath: '/how-it-works'
-      preLoaderRoute: typeof HowItWorksRouteImport
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/recovery-codes': {
-      id: '/recovery-codes'
-      path: '/recovery-codes'
-      fullPath: '/recovery-codes'
-      preLoaderRoute: typeof RecoveryCodesRouteImport
+    '/image-to-text': {
+      id: '/image-to-text'
+      path: '/image-to-text'
+      fullPath: '/image-to-text'
+      preLoaderRoute: typeof ImageToTextRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/security': {
-      id: '/security'
-      path: '/security'
-      fullPath: '/security'
-      preLoaderRoute: typeof SecurityRouteImport
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/totp-setup': {
-      id: '/totp-setup'
-      path: '/totp-setup'
-      fullPath: '/totp-setup'
-      preLoaderRoute: typeof TotpSetupRouteImport
+    '/remove-text': {
+      id: '/remove-text'
+      path: '/remove-text'
+      fullPath: '/remove-text'
+      preLoaderRoute: typeof RemoveTextRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/verify': {
-      id: '/verify'
-      path: '/verify'
-      fullPath: '/verify'
-      preLoaderRoute: typeof VerifyRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/extract-text': {
+      id: '/api/extract-text'
+      path: '/api/extract-text'
+      fullPath: '/api/extract-text'
+      preLoaderRoute: typeof ApiExtractTextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/remove-text': {
+      id: '/api/remove-text'
+      path: '/api/remove-text'
+      fullPath: '/api/remove-text'
+      preLoaderRoute: typeof ApiRemoveTextRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -197,13 +297,18 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccessRoute: AccessRoute,
+  CollageMakerRoute: CollageMakerRoute,
   DashboardRoute: DashboardRoute,
-  HowItWorksRoute: HowItWorksRoute,
-  RecoveryCodesRoute: RecoveryCodesRoute,
-  RegisterRoute: RegisterRoute,
-  SecurityRoute: SecurityRoute,
-  TotpSetupRoute: TotpSetupRoute,
-  VerifyRoute: VerifyRoute,
+  HistoryRoute: HistoryRoute,
+  ImageToTextRoute: ImageToTextRoute,
+  LoginRoute: LoginRoute,
+  PricingRoute: PricingRoute,
+  RemoveTextRoute: RemoveTextRoute,
+  SettingsRoute: SettingsRoute,
+  SignupRoute: SignupRoute,
+  ApiExtractTextRoute: ApiExtractTextRoute,
+  ApiRemoveTextRoute: ApiRemoveTextRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

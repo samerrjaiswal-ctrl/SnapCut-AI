@@ -1,179 +1,204 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  CheckCircle2,
-  Circle,
-  Laptop,
-  RefreshCw,
-  ShieldCheck,
-  Smartphone,
-} from "lucide-react";
-import { AppShell } from "@/components/app-shell";
+import { AppLayout } from "@/components/layout/app-layout";
+import { ToolCard } from "@/components/snapcut/tool-card";
+import { NewProjectDialog } from "@/components/snapcut/new-project-dialog";
+import { Icon } from "@/components/snapcut/icon";
+import { useAuth } from "@/components/providers/auth-provider";
+import { getHistoryStats, listHistory, type HistoryRecord, type HistoryStats } from "@/services/history-service";
 
 export const Route = createFileRoute("/dashboard")({
+  component: DashboardPage,
   head: () => ({
-    meta: [
-      { title: "Security dashboard | AegisGuard" },
-      {
-        name: "description",
-        content:
-          "Review your AegisGuard security score, active authentication methods, trusted devices, and recent account activity.",
-      },
-      { property: "og:title", content: "Security dashboard | AegisGuard" },
-      {
-        property: "og:description",
-        content: "Your account hardening status at a glance.",
-      },
-    ],
+    meta: [{ title: "Dashboard | SnapCut AI" }],
   }),
-  component: Dashboard,
 });
 
-const devices = [
-  { icon: Smartphone, name: "Android Phone", method: "Authenticator", last: "Active now" },
-  { icon: Laptop, name: "Windows Laptop", method: "Passkey", last: "2 days ago" },
-];
+function DashboardPage() {
+  const { session } = useAuth();
+  const [projectOpen, setProjectOpen] = useState(false);
+  const [notifyOpen, setNotifyOpen] = useState(false);
+  const [stats, setStats] = useState<HistoryStats>({ total: 0, removeText: 0, extractText: 0 });
+  const [recent, setRecent] = useState<HistoryRecord[]>([]);
+  const name = session?.name?.split(" ")[0] ?? "Creator";
 
-const activity = [
-  { label: "Successful login", meta: "Chrome · Mumbai, IN", time: "12 min ago", ok: true },
-  { label: "Recovery codes viewed", meta: "Chrome · Mumbai, IN", time: "Yesterday", ok: true },
-  { label: "Failed login attempt", meta: "Unknown device · Berlin, DE", time: "3 days ago", ok: false },
-];
-
-function Dashboard() {
-  const score = 85;
+  useEffect(() => {
+    if (!session) return;
+    void Promise.all([getHistoryStats(session.userId), listHistory(session.userId, "all")])
+      .then(([nextStats, items]) => {
+        setStats(nextStats);
+        setRecent(items.slice(0, 5));
+      })
+      .catch((error) => {
+        if (import.meta.env.DEV) console.error(error);
+      });
+  }, [session]);
 
   return (
-    <AppShell title="Dashboard">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-foreground">Welcome back, Sameer</h2>
-        <p className="text-muted-foreground">Your account is protected.</p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="glass lift glow-cyan rounded-2xl p-6 lg:col-span-2">
-          <div className="flex flex-wrap items-center justify-between gap-6">
-            <div>
-              <div className="mb-4 flex items-center gap-3">
-                <ShieldCheck className="size-6 text-cyan" />
-                <div>
-                  <h3 className="font-semibold text-foreground">Account Security</h3>
-                  <p className="text-sm text-success">Status: Protected</p>
-                </div>
-              </div>
-              <ul className="flex flex-col gap-2 text-sm">
-                <li className="flex items-center gap-2 text-foreground">
-                  <CheckCircle2 className="size-4 text-success" /> Authenticator enabled
-                </li>
-                <li className="flex items-center gap-2 text-foreground">
-                  <CheckCircle2 className="size-4 text-success" /> Recovery codes available
-                </li>
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <Circle className="size-4" /> Passkey not configured
-                </li>
-              </ul>
-              <Link
-                to="/security"
-                className="mt-6 inline-flex rounded-lg bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:-translate-y-0.5 glow-hover"
-              >
-                Improve Security
-              </Link>
+    <AppLayout contentClassName="p-container-margin-mobile md:p-container-margin-desktop">
+      <div className="hidden md:flex justify-between items-end mb-8 md:mb-12 border-b border-outline-variant pb-6">
+        <div>
+          <h1 className="font-display text-display text-on-background mb-2 animate-text-smooth">
+            Welcome back, {name}.
+          </h1>
+          <p className="font-body-lg text-body-lg text-on-surface-variant animate-text-smooth delay-2">
+            {session?.email ? `Signed in as ${session.email}` : "Here is a quick overview of your workspace today."}
+          </p>
+        </div>
+        <div className="flex items-center gap-4 relative">
+          <button
+            type="button"
+            className="flex items-center justify-center w-10 h-10 rounded-full border border-outline-variant bg-surface hover:bg-surface-variant text-on-surface-variant hover:text-on-surface"
+            aria-label="Notifications"
+            onClick={() => setNotifyOpen((v) => !v)}
+          >
+            <Icon name="notifications" />
+          </button>
+          {notifyOpen ? (
+            <div className="absolute right-0 top-12 w-72 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 z-20">
+              <p className="font-label-md text-label-md text-on-surface mb-2">Notifications</p>
+              <p className="font-body-md text-body-md text-on-surface-variant">
+                You have {stats.total} saved {stats.total === 1 ? "operation" : "operations"} in history.
+              </p>
             </div>
-
-            <ScoreRing score={score} />
-          </div>
-        </div>
-
-        <div className="glass lift rounded-2xl p-6">
-          <h3 className="mb-4 font-semibold text-foreground">Your Devices</h3>
-          <div className="flex flex-col gap-3">
-            {devices.map((device) => (
-              <div
-                key={device.name}
-                className="flex items-center gap-3 rounded-xl border border-border bg-white/5 p-3"
-              >
-                <span className="grid size-10 place-items-center rounded-lg bg-cyan/10">
-                  <device.icon className="size-5 text-cyan" />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">{device.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {device.method} · {device.last}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <Link
-            to="/security"
-            className="mt-5 inline-block text-sm text-cyan hover:underline"
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setProjectOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface border border-outline-variant hover:bg-surface-variant group btn-glow"
           >
-            Manage Devices
-          </Link>
-        </div>
-
-        <div className="glass lift rounded-2xl p-6 lg:col-span-2">
-          <h3 className="mb-4 font-semibold text-foreground">Recent Activity</h3>
-          <ul className="flex flex-col divide-y divide-border">
-            {activity.map((item) => (
-              <li key={item.label + item.time} className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`size-2 rounded-full ${item.ok ? "bg-success" : "bg-destructive"}`}
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{item.label}</p>
-                    <p className="text-xs text-muted-foreground">{item.meta}</p>
-                  </div>
-                </div>
-                <span className="text-xs text-muted-foreground">{item.time}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="glass lift rounded-2xl p-6">
-          <h3 className="mb-4 font-semibold text-foreground">Authenticator TOTP</h3>
-          <div className="rounded-xl border border-border bg-white/5 p-4 text-center">
-            <p className="font-mono text-3xl font-bold tracking-widest text-foreground">••••••</p>
-            <p className="mt-2 inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <RefreshCw className="size-3.5" /> Rotates every 30s
-            </p>
-          </div>
-          <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-            <CheckCircle2 className="size-3.5" /> Enabled
-          </span>
-          <Link
-            to="/totp-setup"
-            className="mt-5 block text-sm text-cyan hover:underline"
-          >
-            Manage
-          </Link>
+            <Icon name="add" className="text-secondary group-hover:text-secondary-container" />
+            <span className="font-label-md text-label-md text-on-surface font-semibold">
+              New Project
+            </span>
+          </button>
         </div>
       </div>
-    </AppShell>
-  );
-}
 
-function ScoreRing({ score }: { score: number }) {
-  const radius = 52;
-  const circumference = 2 * Math.PI * radius;
-  return (
-    <div className="relative grid size-32 place-items-center">
-      <svg viewBox="0 0 120 120" className="size-32 -rotate-90">
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--border)" strokeWidth="10" />
-        <circle
-          cx="60"
-          cy="60"
-          r={radius}
-          fill="none"
-          stroke="var(--cyan)"
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - score / 100)}
+      <div className="md:hidden mb-6">
+        <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-1 animate-text-smooth">
+          Welcome back.
+        </h1>
+        <p className="font-body-md text-body-md text-on-surface-variant animate-text-smooth delay-2">
+          Ready to create?
+        </p>
+      </div>
+
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <ToolCard
+          to="/remove-text"
+          icon="ink_eraser"
+          title="Remove Text"
+          description="Effortlessly erase unwanted text or watermarks from any image while preserving the background using AI."
         />
-      </svg>
-      <span className="absolute font-mono text-2xl font-bold text-foreground">{score}%</span>
-    </div>
+        <ToolCard
+          to="/image-to-text"
+          icon="article"
+          title="Image to Text"
+          description="Extract raw text data from screenshots, documents, and complex layouts instantly with high precision OCR."
+        />
+        <ToolCard
+          to="/collage-maker"
+          icon="dashboard_customize"
+          title="Collage Maker"
+          description="Generate professional, seamless collages with intelligent auto-layout and smart framing algorithms."
+        />
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <section className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
+          <div className="flex justify-between items-center mb-6 border-b border-outline-variant pb-4">
+            <h2 className="font-headline-md text-headline-md text-on-background flex items-center gap-2">
+              <Icon name="history" className="text-outline" /> Recent Activity
+            </h2>
+            <Link
+              to="/history"
+              className="font-label-sm text-label-sm text-secondary hover:text-secondary-container"
+            >
+              View All
+            </Link>
+          </div>
+          <div className="flex flex-col gap-2">
+            {recent.length === 0 ? (
+              <p className="font-body-md text-body-md text-on-surface-variant py-6">
+                No operations yet. Run Remove Text or Image to Text to see activity here.
+              </p>
+            ) : (
+              recent.map((item) => (
+                <Link
+                  key={item.id}
+                  to="/history"
+                  className="flex items-center justify-between p-3 hover:bg-surface-container-low rounded-lg group border border-transparent hover:border-outline-variant"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-10 h-10 rounded bg-surface border border-outline-variant flex items-center justify-center text-outline group-hover:text-secondary">
+                      <Icon
+                        name={item.category === "remove-text" ? "ink_eraser" : "article"}
+                        size={20}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-label-md text-label-md text-on-background truncate">
+                        {item.name}
+                      </h4>
+                      <p className="font-label-sm text-label-sm text-on-surface-variant">
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="font-label-sm text-label-sm text-outline-variant shrink-0 ml-3">
+                    {item.date}
+                  </span>
+                </Link>
+              ))
+            )}
+          </div>
+        </section>
+
+        <aside className="bg-surface-container-highest border border-outline-variant rounded-xl p-6 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-secondary-fixed-dim rounded-full blur-3xl opacity-40 pointer-events-none" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-6">
+              <Icon name="data_usage" className="text-secondary" />
+              <h2 className="font-headline-md text-headline-md text-on-background">Your usage</h2>
+            </div>
+            <div className="mb-8">
+              <div className="flex justify-between items-end mb-2">
+                <span className="font-display text-display text-on-background">{stats.total}</span>
+                <span className="font-body-md text-body-md text-on-surface-variant mb-2">
+                  total operations
+                </span>
+              </div>
+              <div className="space-y-2 font-label-sm text-label-sm text-on-surface-variant">
+                <p>Text removal: {stats.removeText}</p>
+                <p>Image to text: {stats.extractText}</p>
+              </div>
+            </div>
+          </div>
+          <div className="relative z-10 mt-auto pt-4 border-t border-outline-variant">
+            <p className="font-label-md text-label-md text-on-background mb-4">
+              Running low on compute? Upgrade your tier for unlimited operations.
+            </p>
+            <Link
+              to="/pricing"
+              className="block w-full bg-primary text-on-primary hover:bg-on-surface-variant py-3 rounded-lg font-label-md text-label-md text-center"
+            >
+              Upgrade Plan
+            </Link>
+          </div>
+        </aside>
+      </div>
+
+      <button
+        type="button"
+        aria-label="New Project"
+        onClick={() => setProjectOpen(true)}
+        className="md:hidden fixed bottom-24 right-4 w-14 h-14 bg-secondary text-on-secondary rounded-full shadow-lg flex items-center justify-center hover:bg-secondary-container z-40"
+      >
+        <Icon name="add" size={28} />
+      </button>
+
+      <NewProjectDialog open={projectOpen} onOpenChange={setProjectOpen} />
+    </AppLayout>
   );
 }

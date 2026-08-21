@@ -10,6 +10,14 @@ is `src/routes/__root.tsx`.
 | File | URL |
 | --- | --- |
 | `index.tsx` | `/` |
+| `pricing.tsx` | `/pricing` |
+| `access.tsx` | `/access` |
+| `dashboard.tsx` | `/dashboard` |
+| `remove-text.tsx` | `/remove-text` |
+| `image-to-text.tsx` | `/image-to-text` |
+| `collage-maker.tsx` | `/collage-maker` |
+| `history.tsx` | `/history` |
+| `settings.tsx` | `/settings` |
 | `about.tsx` | `/about` |
 | `users/index.tsx` | `/users` |
 | `users/$id.tsx` | `/users/:id` (dynamic — bare `$`, no curly braces) |

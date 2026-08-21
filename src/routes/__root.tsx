@@ -11,24 +11,48 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AuthProvider } from "@/components/providers/auth-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { Icon } from "@/components/snapcut/icon";
+import { SmoothText } from "@/components/snapcut/smooth-text";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
+    <div className="bg-background text-on-background min-h-screen flex items-center justify-center relative overflow-hidden">
+      <main className="w-full max-w-lg mx-auto px-container-margin-mobile md:px-container-margin-desktop flex flex-col items-center text-center z-10 relative animate-scale-in">
+        <div className="mb-8">
+          <Icon name="error" className="text-outline-variant" size={64} />
         </div>
+        <SmoothText
+          as="h1"
+          text="404"
+          glow
+          className="font-display text-display text-primary-container mb-4"
+        />
+        <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2 animate-text-smooth delay-2">
+          Page not found
+        </h2>
+        <p className="font-body-lg text-body-lg text-on-surface-variant mb-12 max-w-md mx-auto animate-text-smooth delay-3">
+          The page you are looking for might have been removed, had its name changed, or is
+          temporarily unavailable.
+        </p>
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center justify-center gap-2 bg-primary-container text-on-primary h-12 px-8 rounded-lg font-label-md text-label-md hover:bg-on-primary-fixed-variant btn-glow"
+        >
+          Back to Dashboard
+        </Link>
+      </main>
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-20 flex justify-center items-center">
+        <div className="w-[800px] h-[800px] rounded-full border border-outline-variant absolute notfound-ring" />
+        <div
+          className="w-[600px] h-[600px] rounded-full border border-outline-variant absolute notfound-ring"
+          style={{ animationDuration: "36s", animationDirection: "reverse" }}
+        />
+        <div
+          className="w-[400px] h-[400px] rounded-full border border-outline-variant absolute notfound-ring"
+          style={{ animationDuration: "22s" }}
+        />
       </div>
     </div>
   );
@@ -44,25 +68,26 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-xl font-semibold tracking-tight text-on-surface">
           This page didn't load
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-on-surface-variant">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
+            type="button"
             onClick={() => {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-lg bg-primary-container px-4 py-2 text-sm font-medium text-on-primary"
           >
             Try again
           </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-2 text-sm font-medium text-on-surface"
           >
             Go home
           </a>
@@ -77,21 +102,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AegisGuard — Signal-Free Authentication" },
+      { title: "SnapCut AI — Powerful Image Tools. Simple Workflow." },
       {
         name: "description",
         content:
-          "AegisGuard secures your accounts with device-based TOTP authentication that works without mobile signal.",
+          "Remove text from images, extract text with OCR, and create professional collages in one workspace.",
       },
-      { name: "author", content: "AegisGuard" },
-      { property: "og:title", content: "AegisGuard — Signal-Free Authentication" },
+      { name: "author", content: "SnapCut AI" },
+      { property: "og:title", content: "SnapCut AI — Powerful Image Tools. Simple Workflow." },
       {
         property: "og:description",
-        content: "Device-based TOTP security that works even when SMS does not.",
+        content: "Professional image tools for creators and teams.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -99,7 +122,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
@@ -112,7 +139,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <HeadContent />
       </head>
@@ -129,8 +156,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AuthProvider>
+        <Outlet />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
