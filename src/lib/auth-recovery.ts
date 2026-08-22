@@ -23,6 +23,11 @@ export function authParamsFromUrl() {
   };
 }
 
+export function markPasswordRecovery() {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.setItem(PASSWORD_RECOVERY_KEY, "1");
+}
+
 export function isPasswordRecoveryUrl() {
   const { type } = authParamsFromUrl();
   if (type === "recovery") return true;
