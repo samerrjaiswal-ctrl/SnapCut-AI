@@ -17,10 +17,10 @@ export function MarketingHeader({ active }: MarketingHeaderProps) {
     active ?? (pathname === "/pricing" ? "pricing" : pathname === "/" ? "home" : undefined);
 
   return (
-    <nav className="bg-surface text-primary sticky w-full top-0 border-b border-outline-variant z-50 flex justify-between items-center px-container-margin-mobile md:px-container-margin-desktop h-16">
+    <nav className="bg-surface text-primary sticky w-full top-0 border-b border-outline-variant z-50 relative flex justify-between items-center gap-3 px-container-margin-mobile md:px-container-margin-desktop min-h-16 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)]">
       <Link
         to="/"
-        className="font-headline-md text-headline-md font-bold text-on-surface tracking-tight"
+        className="font-headline-md text-headline-md font-bold text-on-surface tracking-tight truncate min-w-0"
       >
         SnapCut AI
       </Link>
@@ -101,7 +101,7 @@ export function MarketingHeader({ active }: MarketingHeaderProps) {
       </button>
 
       {open ? (
-        <div className="absolute top-16 inset-x-0 bg-surface-container-lowest border-b border-outline-variant md:hidden p-4 flex flex-col gap-2">
+        <div className="absolute top-full inset-x-0 bg-surface-container-lowest border-b border-outline-variant md:hidden p-4 flex flex-col gap-2 max-h-[calc(100dvh-4rem)] overflow-y-auto">
           <Link
             to="/"
             onClick={() => setOpen(false)}

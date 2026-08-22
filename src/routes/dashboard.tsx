@@ -40,12 +40,12 @@ function DashboardPage() {
 
   return (
     <>
-      <div className="hidden md:flex justify-between items-end mb-8 md:mb-12 border-b border-outline-variant pb-6">
-        <div>
+      <div className="hidden lg:flex justify-between items-end gap-4 mb-8 md:mb-12 border-b border-outline-variant pb-6">
+        <div className="min-w-0">
           <h1 className="font-display text-display text-on-background mb-2">
             Welcome back, {name}.
           </h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant">
+          <p className="font-body-lg text-body-lg text-on-surface-variant truncate">
             {session?.email ? `Signed in as ${session.email}` : "Here is a quick overview of your workspace today."}
           </p>
         </div>
@@ -79,7 +79,7 @@ function DashboardPage() {
         </div>
       </div>
 
-      <div className="md:hidden mb-6">
+      <div className="lg:hidden mb-6">
         <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-1">
           Welcome back.
         </h1>
@@ -88,7 +88,7 @@ function DashboardPage() {
         </p>
       </div>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
         <ToolCard
           to="/remove-text"
           icon="ink_eraser"
@@ -151,7 +151,7 @@ function DashboardPage() {
                       <h4 className="font-label-md text-label-md text-on-background truncate">
                         {item.name}
                       </h4>
-                      <p className="font-label-sm text-label-sm text-on-surface-variant">
+                      <p className="font-label-sm text-label-sm text-on-surface-variant truncate">
                         {item.description}
                       </p>
                     </div>
@@ -204,7 +204,7 @@ function DashboardPage() {
         type="button"
         aria-label="New Project"
         onClick={() => setProjectOpen(true)}
-        className="md:hidden fixed bottom-24 right-4 w-14 h-14 bg-secondary text-on-secondary rounded-full shadow-lg flex items-center justify-center hover:bg-secondary-container z-40"
+        className="lg:hidden fixed right-4 w-14 h-14 bg-secondary text-on-secondary rounded-full shadow-lg flex items-center justify-center hover:bg-secondary-container z-40 bottom-[calc(6rem+env(safe-area-inset-bottom))]"
       >
         <Icon name="add" size={28} />
       </button>

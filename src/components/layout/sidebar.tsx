@@ -22,7 +22,7 @@ export function Sidebar({ activePath }: SidebarProps) {
   const navigate = useNavigate();
 
   return (
-    <nav className="hidden md:flex flex-col p-6 gap-2 bg-primary-container text-on-primary-fixed fixed left-0 top-0 h-full w-sidebar-width border-r border-outline-variant z-50">
+    <nav className="hidden lg:flex flex-col p-6 gap-2 bg-primary-container text-on-primary-fixed fixed left-0 top-0 h-full w-sidebar-width border-r border-outline-variant z-50 overflow-hidden">
       <div className="flex flex-col gap-1 mb-8 pl-4 pt-2">
         <div className="flex items-center gap-3">
           <Icon name="dashboard" filled className="text-secondary" />

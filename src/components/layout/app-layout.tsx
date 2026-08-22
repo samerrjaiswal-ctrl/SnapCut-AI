@@ -36,14 +36,14 @@ export function AppLayout({ children }: AppLayoutProps) {
     <RequireAuth>
       <div
         className={cn(
-          "bg-background text-on-surface flex flex-col md:flex-row antialiased",
+          "bg-background text-on-surface flex flex-col lg:flex-row antialiased overflow-x-clip",
           isCollage ? "h-dvh overflow-hidden" : "min-h-screen",
         )}
       >
-        <header className="md:hidden sticky top-0 z-40 bg-surface border-b border-outline-variant flex justify-between items-center w-full px-container-margin-mobile h-16 shrink-0">
-          <div className="flex items-center gap-3">
-            <Icon name="dashboard" filled className="text-secondary" />
-            <span className="font-headline-md text-headline-md font-bold text-on-surface">
+        <header className="lg:hidden sticky top-0 z-40 bg-surface border-b border-outline-variant flex justify-between items-center w-full min-w-0 px-container-margin-mobile h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <Icon name="dashboard" filled className="text-secondary shrink-0" />
+            <span className="font-headline-md text-headline-md font-bold text-on-surface truncate">
               SnapCut AI
             </span>
           </div>
@@ -69,11 +69,11 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         <main
           className={cn(
-            "flex-grow w-full min-w-0 md:ml-sidebar-width md:w-[calc(100%-var(--spacing-sidebar-width))] bg-background",
+            "flex-grow w-full min-w-0 lg:ml-sidebar-width lg:w-[calc(100%-var(--spacing-sidebar-width))] bg-background",
             isCollage
-              ? "flex flex-col h-full min-h-0 overflow-hidden pb-16 md:pb-0"
+              ? "flex flex-col h-full min-h-0 overflow-hidden pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0"
               : cn(
-                  "min-h-screen pb-24 md:pb-container-margin-desktop",
+                  "min-h-screen pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-container-margin-desktop",
                   MAIN_BY_PATH[pathname],
                 ),
           )}

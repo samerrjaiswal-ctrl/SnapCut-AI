@@ -23,12 +23,12 @@
   --font-label-md: Inter, "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-label-sm: Inter, "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
 
-  --text-display: 48px;
-  --text-display--line-height: 56px;
+  --text-display: clamp(1.75rem, 1.1rem + 3.2vw, 3rem);
+  --text-display--line-height: 1.15;
   --text-display--letter-spacing: -0.02em;
   --text-display--font-weight: 700;
-  --text-headline-lg: 32px;
-  --text-headline-lg--line-height: 40px;
+  --text-headline-lg: clamp(1.375rem, 1.05rem + 1.4vw, 2rem);
+  --text-headline-lg--line-height: 1.25;
   --text-headline-lg--letter-spacing: -0.01em;
   --text-headline-lg--font-weight: 600;
   --text-headline-lg-mobile: 24px;
@@ -188,6 +188,7 @@
   html {
     scroll-behavior: smooth;
     font-synthesis: none;
+    max-width: 100%;
   }
 
   body {
@@ -196,6 +197,13 @@
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 24px;
+    overflow-x: clip;
+    min-height: 100dvh;
+  }
+
+  img,
+  video {
+    max-width: 100%;
   }
 
   button,
@@ -521,6 +529,15 @@ input[type="range"].snapcut-range::-webkit-slider-thumb {
   box-shadow: 0 16px 32px -20px rgba(15, 23, 42, 0.2);
 }
 
+@media (hover: none) {
+  .hover-lift:hover,
+  .btn-glow:hover,
+  .login-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
 .btn-glow {
   transition:
     transform 200ms ease,
@@ -627,6 +644,10 @@ input[type="range"].snapcut-range::-webkit-slider-thumb {
   .auth-panel-active {
     animation: auth-copy-in 520ms cubic-bezier(0.45, 0.05, 0.18, 1) both;
   }
+
+  .auth-shell {
+    animation: scale-in 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
 }
 
 .auth-input {
@@ -674,6 +695,9 @@ input[type="range"].snapcut-range::-webkit-slider-thumb {
 
 .auth-page {
   animation: auth-page-enter 780ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 100dvh;
 }
 
 @keyframes vt-out {

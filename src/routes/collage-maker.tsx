@@ -191,7 +191,7 @@ function CollageMakerPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center w-full px-container-margin-mobile md:px-container-margin-desktop py-3 sm:h-16 shrink-0 border-b border-outline-variant bg-surface z-30">
+      <header className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center w-full min-w-0 px-container-margin-mobile md:px-container-margin-desktop py-3 sm:min-h-16 shrink-0 border-b border-outline-variant bg-surface z-30">
         <div>
           <h2 className="font-headline-md text-headline-md text-on-surface">
             Collage Maker
@@ -212,8 +212,8 @@ function CollageMakerPage() {
         />
       </header>
 
-      <div className="flex min-h-0 flex-1 w-full p-container-margin-mobile md:p-container-margin-desktop flex-col md:flex-row gap-gutter items-stretch overflow-hidden">
-        <aside className="w-full md:w-64 bg-surface-container-lowest rounded-xl border border-outline-variant p-4 flex flex-col gap-6 shrink-0 max-h-56 md:max-h-none md:h-full min-h-0 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 w-full p-container-margin-mobile md:p-container-margin-desktop flex-col lg:flex-row gap-gutter items-stretch overflow-hidden">
+        <aside className="w-full lg:w-64 bg-surface-container-lowest rounded-xl border border-outline-variant p-4 flex flex-col gap-6 shrink-0 max-h-44 sm:max-h-56 lg:max-h-none lg:h-full min-h-0 overflow-y-auto">
           <p className="font-label-sm text-label-sm text-on-surface-variant">
             {filled}/{slots.length} photos placed
           </p>
@@ -222,7 +222,7 @@ function CollageMakerPage() {
             <h3 className="font-label-md text-label-md text-on-surface font-semibold mb-3">
               Templates
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
               {COLLAGE_THEMES.map((item) => {
                 const active = theme === item.id;
                 const layout = getGridLayout(item.id);
@@ -285,7 +285,7 @@ function CollageMakerPage() {
           onDragState={setDragging}
         />
 
-        <aside className="w-full md:w-72 bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col gap-6 shrink-0 max-h-80 md:max-h-none md:h-full min-h-0 overflow-y-auto">
+        <aside className="w-full lg:w-72 bg-surface-container-lowest rounded-xl border border-outline-variant p-4 sm:p-6 flex flex-col gap-6 shrink-0 max-h-64 sm:max-h-80 lg:max-h-none lg:h-full min-h-0 overflow-y-auto">
           <h3 className="font-label-md text-label-md text-on-surface font-semibold border-b border-outline-variant pb-2">
             Layout Settings
           </h3>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { createPortal } from "react-dom";
 import { FULL_CROP, type CropRect } from "@/services/demo-collage-service";
 
 type CropEditorProps = {
@@ -140,27 +141,38 @@ export function CropEditor({ imageUrl, crop, aspect, onApply, onCancel }: CropEd
     height: (draft.height / 100) * frame.height,
   };
 
-  return (
+  function applyCrop() {
+    onApply(draft);
+  }
+
+  const overlay = (
     <div
-      className="fixed inset-0 z-50 bg-black/80 flex flex-col touch-none"
+      className="fixed inset-0 z-[120] flex h-[100dvh] max-h-[100dvh] flex-col bg-black touch-none"
       onPointerMove={onMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
     >
-      <div className="flex items-center justify-between px-4 py-3 text-white">
-        <button type="button" className="font-label-md text-label-md" onClick={onCancel}>
-          Cancel
-        </button>
-        <p className="font-label-md text-label-md">Drag the box to crop</p>
+      <div className="relative z-20 flex shrink-0 items-center justify-between gap-3 bg-black px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 touch-auto">
         <button
           type="button"
-          className="font-label-md text-label-md text-secondary"
-          onClick={() => onApply(draft)}
+          className="shrink-0 min-h-11 px-3 rounded-lg font-label-md text-label-md text-white"
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+        <p className="min-w-0 truncate text-center font-label-md text-label-md text-white/80">
+          Drag to crop
+        </p>
+        <button
+          type="button"
+          className="hidden sm:inline-flex shrink-0 min-h-11 px-4 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md"
+          onClick={applyCrop}
         >
           Apply
         </button>
       </div>
-      <div ref={stageRef} className="relative flex-1 min-h-0 mx-4 mb-4 overflow-hidden">
+
+      <div ref={stageRef} className="relative z-0 min-h-0 flex-1 overflow-hidden mx-3">
         <img
           src={imageUrl}
           alt=""
@@ -188,12 +200,12 @@ export function CropEditor({ imageUrl, crop, aspect, onApply, onCancel }: CropEd
               key={handle}
               type="button"
               aria-label={`Resize ${handle}`}
-              className="absolute h-4 w-4 bg-white rounded-sm"
+              className="absolute h-8 w-8 sm:h-4 sm:w-4 bg-white rounded-sm"
               style={{
-                top: handle.startsWith("n") ? -6 : undefined,
-                bottom: handle.startsWith("s") ? -6 : undefined,
-                left: handle.endsWith("w") ? -6 : undefined,
-                right: handle.endsWith("e") ? -6 : undefined,
+                top: handle.startsWith("n") ? -10 : undefined,
+                bottom: handle.startsWith("s") ? -10 : undefined,
+                left: handle.endsWith("w") ? -10 : undefined,
+                right: handle.endsWith("e") ? -10 : undefined,
                 cursor: `${handle}-resize`,
               }}
               onPointerDown={(event) => startDrag(handle, event)}
@@ -201,9 +213,21 @@ export function CropEditor({ imageUrl, crop, aspect, onApply, onCancel }: CropEd
           ))}
         </div>
       </div>
-      <p className="text-center text-white/80 text-sm pb-4">Move or resize the box, then Apply</p>
+
+      <div className="relative z-20 shrink-0 bg-black px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] touch-auto">
+        <button
+          type="button"
+          className="flex w-full min-h-12 items-center justify-center rounded-xl bg-secondary text-on-secondary font-label-md text-label-md"
+          onClick={applyCrop}
+        >
+          Apply
+        </button>
+      </div>
     </div>
   );
+
+  if (typeof document === "undefined") return overlay;
+  return createPortal(overlay, document.body);
 }
 
 export function croppedImageStyle(crop: CropRect = FULL_CROP) {

@@ -34,7 +34,7 @@ export function UploadArea({
       onDragOver={(event) => event.preventDefault()}
       onDrop={onDrop}
       className={cn(
-        "w-full h-full min-h-[280px] rounded-xl border border-dashed border-outline-variant bg-surface-container-lowest flex flex-col items-center justify-center gap-4 text-center px-6 hover:border-secondary hover:bg-surface-container-low transition-colors",
+        "w-full h-full min-h-[200px] sm:min-h-[280px] rounded-xl border border-dashed border-outline-variant bg-surface-container-lowest flex flex-col items-center justify-center gap-4 text-center px-4 sm:px-6 hover:border-secondary hover:bg-surface-container-low transition-colors",
         className,
       )}
     >

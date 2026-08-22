@@ -166,13 +166,13 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
     "auth-input w-full h-12 pl-11 pr-4 rounded-xl border border-outline-variant bg-surface focus:border-secondary outline-none font-body-md text-body-md";
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden auth-page">
+    <div className="bg-background text-on-background min-h-dvh flex flex-col items-center justify-center p-4 py-8 sm:p-6 relative overflow-x-hidden overflow-y-auto auth-page">
       <div className="login-glow login-glow-a" />
       <div className="login-glow login-glow-b" />
       <div className="relative z-10 w-full max-w-5xl bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden auth-shell">
         {error ? (
           <div
-            className="mx-6 mt-6 rounded-lg border border-error-container bg-error-container px-3 py-2 text-sm text-on-error-container"
+            className="mx-4 sm:mx-6 mt-4 sm:mt-6 rounded-lg border border-error-container bg-error-container px-3 py-2 text-sm text-on-error-container"
             role="alert"
           >
             <p>{error}</p>
@@ -190,7 +190,7 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
         ) : null}
         {notice ? (
           <div
-            className="mx-6 mt-6 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface"
+            className="mx-4 sm:mx-6 mt-4 sm:mt-6 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface"
             role="status"
           >
             <p>{notice}</p>
@@ -207,10 +207,10 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
           </div>
         ) : null}
 
-        <div className="relative grid md:grid-cols-2 min-h-[640px]">
+        <div className="relative grid md:grid-cols-2 min-h-0 md:min-h-[640px]">
             <div
               className={cn(
-                "auth-panel p-8 md:p-10 flex flex-col justify-center",
+                "auth-panel p-5 sm:p-8 md:p-10 flex flex-col justify-center",
                 tab === "login" ? "auth-panel-active" : "auth-panel-idle",
               )}
               aria-hidden={tab !== "login"}
@@ -300,7 +300,7 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
 
             <div
               className={cn(
-                "auth-panel p-8 md:p-10 flex flex-col justify-center",
+                "auth-panel p-5 sm:p-8 md:p-10 flex flex-col justify-center",
                 tab === "signup" ? "auth-panel-active" : "auth-panel-idle",
               )}
               aria-hidden={tab !== "signup"}
@@ -413,7 +413,7 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
 
             <div
               className={cn(
-                "auth-overlay hidden md:flex absolute inset-y-0 left-0 w-1/2 z-20 flex-col items-center justify-center px-10 text-center bg-primary-container text-on-primary overflow-hidden",
+                "auth-overlay hidden md:flex absolute inset-y-0 left-0 w-1/2 z-20 flex-col items-center justify-center px-6 lg:px-10 text-center bg-primary-container text-on-primary overflow-hidden",
                 tab === "signup" ? "auth-overlay-signup" : "auth-overlay-login",
               )}
             >

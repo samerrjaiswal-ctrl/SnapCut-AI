@@ -63,8 +63,8 @@ function HistoryPage() {
 
   return (
     <>
-      <header className="mb-12">
-        <h1 className="font-headline-lg text-headline-lg font-bold text-on-surface mb-2">
+      <header className="mb-8 md:mb-12">
+        <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-on-surface mb-2">
           History
         </h1>
         <p className="font-body-md text-body-md text-on-surface-variant">
@@ -84,7 +84,7 @@ function HistoryPage() {
             aria-selected={tab === item.id}
             onClick={() => setTab(item.id)}
             className={cn(
-              "font-label-md text-label-md pb-2 px-1 whitespace-nowrap",
+              "shrink-0 font-label-md text-label-md pb-2 px-1 whitespace-nowrap",
               tab === item.id
                 ? "text-secondary font-bold border-b-2 border-secondary"
                 : "text-on-surface-variant hover:text-on-surface",

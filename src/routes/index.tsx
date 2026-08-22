@@ -68,7 +68,7 @@ function LandingPage() {
     <div className="bg-background text-on-background font-body-md text-body-md min-h-screen flex flex-col">
       <MarketingHeader active="home" />
       <main className="flex-grow w-full max-w-7xl mx-auto px-container-margin-mobile md:px-container-margin-desktop">
-        <section className="py-24 md:py-32 flex flex-col items-center text-center gap-8">
+        <section className="py-12 sm:py-16 md:py-24 lg:py-32 flex flex-col items-center text-center gap-6 md:gap-8">
           <div className="max-w-3xl space-y-6">
             <h1 className="font-display text-display text-primary tracking-tight">
               <SmoothText
@@ -103,7 +103,7 @@ function LandingPage() {
                 <Link
                   to="/dashboard"
                   viewTransition
-                  className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-6 py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 btn-glow"
+                  className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-6 py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 btn-glow w-full sm:w-auto"
                 >
                   Open Dashboard
                   <Icon name="arrow_forward" size={18} />
@@ -112,7 +112,7 @@ function LandingPage() {
                 <Link
                   to="/signup"
                   viewTransition
-                  className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-6 py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 btn-glow"
+                  className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-6 py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 btn-glow w-full sm:w-auto"
                 >
                   Get Started Free
                   <Icon name="arrow_forward" size={18} />
@@ -120,13 +120,13 @@ function LandingPage() {
               )}
               <a
                 href="#features"
-                className="bg-surface-variant text-on-surface hover:bg-surface-container-highest px-6 py-3 rounded-lg border border-outline-variant font-label-md text-label-md"
+                className="bg-surface-variant text-on-surface hover:bg-surface-container-highest px-6 py-3 rounded-lg border border-outline-variant font-label-md text-label-md w-full sm:w-auto"
               >
                 Explore Tools
               </a>
             </div>
           </div>
-          <div className="w-full max-w-5xl mt-12 relative rounded-xl border border-outline-variant bg-surface p-2 overflow-hidden aspect-video hover-lift animate-scale-in delay-5">
+          <div className="w-full max-w-5xl mt-8 md:mt-12 relative rounded-xl border border-outline-variant bg-surface p-1 sm:p-2 overflow-hidden aspect-video hover-lift animate-scale-in delay-5">
             <img
               className="w-full h-full object-cover rounded-lg border border-outline-variant"
               alt="SnapCut AI workspace preview showing image tools in a clean professional interface"
@@ -135,7 +135,7 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="py-24 border-t border-outline-variant" id="features">
+        <section className="py-12 md:py-24 border-t border-outline-variant" id="features">
           <div className="text-center mb-16">
             <h2 className="font-headline-lg text-headline-lg text-primary tracking-tight mb-4 animate-text-smooth">
               A Complete Professional Toolkit
@@ -144,7 +144,7 @@ function LandingPage() {
               Everything you need to manipulate image text and layouts effortlessly.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
             {TOOLS.map((tool) =>
               signedIn ? (
                 <Link
@@ -167,7 +167,7 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="py-24 border-t border-outline-variant bg-surface-bright rounded-2xl p-8 md:p-16 my-16">
+        <section className="py-12 md:py-24 border-t border-outline-variant bg-surface-bright rounded-2xl p-6 md:p-16 my-8 md:my-16">
           <div className="text-center mb-16">
             <h2 className="font-headline-lg text-headline-lg text-primary tracking-tight mb-4">
               Seamless Workflow
@@ -176,8 +176,8 @@ function LandingPage() {
               Process images in three simple steps.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-            <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-px bg-outline-variant z-0" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 relative">
+            <div className="hidden lg:block absolute top-12 left-[16%] right-[16%] h-px bg-outline-variant z-0" />
             {[
               { step: "1", title: "Upload", body: "Drag and drop your image into the workspace." },
               {

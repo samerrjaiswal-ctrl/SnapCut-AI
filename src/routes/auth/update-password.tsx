@@ -97,9 +97,9 @@ function UpdatePasswordPage() {
   }
 
   return (
-    <div className="bg-background min-h-screen flex items-center justify-center p-4">
+    <div className="bg-background min-h-dvh flex items-center justify-center p-4">
       <form
-        className="w-full max-w-md bg-surface-container-lowest border border-outline-variant rounded-2xl p-8 space-y-5"
+        className="w-full max-w-md bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 sm:p-8 space-y-5"
         onSubmit={(event) => void save(event)}
       >
         <div className="flex items-center gap-2">

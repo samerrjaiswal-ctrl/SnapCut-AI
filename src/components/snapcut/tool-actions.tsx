@@ -23,10 +23,10 @@ export function ToolActions({
   onDownload,
 }: ToolActionsProps) {
   const buttonClass =
-    "inline-flex items-center gap-2 h-10 px-4 rounded-lg font-label-md text-label-md disabled:opacity-45 disabled:pointer-events-none";
+    "inline-flex flex-1 sm:flex-none items-center justify-center gap-2 min-h-11 h-10 px-3 sm:px-4 rounded-lg font-label-md text-label-md disabled:opacity-45 disabled:pointer-events-none";
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-stretch sm:justify-end gap-2 w-full sm:w-auto">
       <button
         type="button"
         onClick={onNew}

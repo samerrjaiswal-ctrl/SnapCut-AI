@@ -267,7 +267,7 @@ function SettingsPage() {
 
   return (
     <>
-      <div className="max-w-2xl mx-auto px-container-margin-mobile md:px-container-margin-desktop py-8 md:py-12">
+      <div className="max-w-2xl mx-auto px-container-margin-mobile md:px-container-margin-desktop py-6 md:py-12 min-w-0">
         <header className="mb-8 md:mb-12">
           <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">
             Settings
@@ -367,7 +367,7 @@ function SettingsPage() {
                   <button
                     type="submit"
                     disabled={saving || !dirty}
-                    className="bg-primary text-on-primary px-6 py-2 rounded-lg font-label-md text-label-md font-semibold hover:bg-on-surface-variant disabled:opacity-50"
+                    className="w-full sm:w-auto bg-primary text-on-primary px-6 py-2 rounded-lg font-label-md text-label-md font-semibold hover:bg-on-surface-variant disabled:opacity-50"
                   >
                     {saving ? "Saving…" : "Save Changes"}
                   </button>
@@ -383,7 +383,7 @@ function SettingsPage() {
                 Account & Usage
               </h2>
               <div className="bg-surface-container-low border border-outline-variant rounded-lg p-6 mb-6">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-start gap-3 mb-4">
                   <div>
                     <h3 className="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wider">
                       Current Plan

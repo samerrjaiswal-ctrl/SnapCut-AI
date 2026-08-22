@@ -20,7 +20,7 @@ type MobileNavProps = {
 export function MobileNav({ activePath }: MobileNavProps) {
   return (
     <nav
-      className="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-highest border-t border-outline-variant shadow-lg flex justify-around items-center px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-50 rounded-t-xl bg-surface-container-highest border-t border-outline-variant shadow-lg flex justify-around items-stretch px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
       aria-label="Primary"
     >
       {MOBILE_ITEMS.map((item) => {
@@ -32,7 +32,7 @@ export function MobileNav({ activePath }: MobileNavProps) {
             to={item.to}
             preload="intent"
             className={cn(
-              "flex flex-col items-center justify-center rounded-full px-4 py-1 scale-90 font-label-sm text-label-sm",
+              "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center rounded-full px-2 py-1 font-label-sm text-label-sm",
               active
                 ? "bg-secondary-container text-on-secondary-container"
                 : "text-on-surface-variant hover:bg-surface-container-high",
@@ -41,7 +41,7 @@ export function MobileNav({ activePath }: MobileNavProps) {
             aria-label={item.label}
           >
             <Icon name={item.icon} filled={active} className="mb-1" />
-            <span>{item.label}</span>
+            <span className="truncate">{item.label}</span>
           </Link>
         );
       })}

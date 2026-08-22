@@ -138,8 +138,8 @@ function ImageToTextPage() {
 
   return (
     <>
-      <div className="px-container-margin-mobile md:px-container-margin-desktop py-8 md:py-12">
-          <div className="w-full flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+      <div className="px-container-margin-mobile md:px-container-margin-desktop py-6 md:py-12">
+          <div className="w-full flex flex-col gap-4 md:gap-6 md:flex-row md:items-end md:justify-between min-w-0">
             <PageHeader
               title="Image to Text"
               description="Extract text from any image with high precision OCR technology."
@@ -159,7 +159,7 @@ function ImageToTextPage() {
 
       <div className="flex-1 w-full px-container-margin-mobile md:px-container-margin-desktop pb-8">
         <div className="w-full h-full flex flex-col lg:flex-row gap-gutter">
-          <section className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col min-h-[400px]">
+          <section className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col min-h-[240px] sm:min-h-[400px] min-w-0">
             <div className="p-4 border-b border-outline-variant bg-surface-bright flex justify-between items-center">
               <span className="font-label-md text-label-md text-on-surface font-medium flex items-center gap-2">
                 <Icon name="image" size={18} /> Original Document
@@ -206,7 +206,7 @@ function ImageToTextPage() {
                 />
               </div>
             </div>
-            <div className="flex-1 p-6 flex items-center justify-center bg-surface-container-low overflow-hidden relative">
+            <div className="flex-1 p-4 sm:p-6 flex items-center justify-center bg-surface-container-low overflow-hidden relative">
               {!imageUrl ? (
                 <UploadArea
                   onFile={onFile}
@@ -217,20 +217,20 @@ function ImageToTextPage() {
                 <img
                   src={imageUrl}
                   alt="Uploaded document preview"
-                  className="max-w-full max-h-[480px] object-contain rounded border border-outline-variant origin-center"
+                  className="max-w-full max-h-[min(480px,55dvh)] object-contain rounded border border-outline-variant origin-center"
                   style={{ transform: `scale(${zoom})` }}
                 />
               )}
             </div>
           </section>
 
-          <section className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col min-h-[400px]">
+          <section className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col min-h-[240px] sm:min-h-[400px] min-w-0">
             <div className="p-4 border-b border-outline-variant bg-surface-bright flex justify-between items-center">
               <span className="font-label-md text-label-md text-on-surface font-medium flex items-center gap-2">
                 <Icon name="notes" size={18} /> Extracted Text
               </span>
             </div>
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-4 sm:p-6">
               {status === "processing" ? (
                 <ProcessingState
                   message="Extracting text…"

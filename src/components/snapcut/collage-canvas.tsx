@@ -60,7 +60,7 @@ export function CollageCanvas({
   return (
     <div
       className={cn(
-        "flex-1 h-full min-h-[16rem] min-w-0 rounded-xl border border-outline-variant p-4 md:p-8 relative overflow-hidden",
+        "flex-1 h-full min-h-[12rem] sm:min-h-[16rem] min-w-0 rounded-xl border border-outline-variant p-2 sm:p-4 md:p-8 relative overflow-hidden",
         dragging && "ring-2 ring-secondary",
       )}
       style={{

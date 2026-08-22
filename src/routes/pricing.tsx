@@ -23,7 +23,7 @@ function PricingPage() {
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col antialiased">
       <MarketingHeader active="pricing" />
-      <main className="min-h-screen px-container-margin-mobile md:px-container-margin-desktop py-12 md:py-24">
+      <main className="min-h-0 flex-1 px-container-margin-mobile md:px-container-margin-desktop py-10 md:py-24">
         <div className="max-w-7xl mx-auto flex flex-col items-center">
           <header className="text-center mb-12">
             <SmoothText
@@ -38,7 +38,7 @@ function PricingPage() {
           </header>
 
           <div
-            className="flex items-center justify-center mb-16 gap-4 bg-surface-container-low p-1 rounded-full border border-outline-variant/30"
+            className="flex flex-wrap items-center justify-center mb-10 md:mb-16 gap-2 sm:gap-4 bg-surface-container-low p-1 rounded-full border border-outline-variant/30"
             role="tablist"
             aria-label="Billing period"
           >
@@ -72,8 +72,8 @@ function PricingPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 flex flex-col relative overflow-hidden hover-lift">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full max-w-4xl">
+            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 sm:p-8 flex flex-col relative overflow-hidden hover-lift">
               <div className="mb-8">
                 <h2 className="font-headline-md text-headline-md text-on-surface mb-2">FREE</h2>
                 <div className="flex items-baseline gap-2 mb-4">
@@ -105,7 +105,7 @@ function PricingPage() {
               </Link>
             </div>
 
-            <div className="bg-primary-container text-on-primary-fixed border border-secondary rounded-xl p-8 flex flex-col relative overflow-hidden md:-translate-y-4 hover-lift">
+            <div className="bg-primary-container text-on-primary-fixed border border-secondary rounded-xl p-6 sm:p-8 flex flex-col relative overflow-hidden lg:-translate-y-4 hover-lift">
               <div className="absolute top-0 right-0 bg-secondary text-on-secondary px-4 py-1 rounded-bl-lg font-label-sm text-label-sm font-bold">
                 POPULAR
               </div>
