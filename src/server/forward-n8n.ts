@@ -1,4 +1,22 @@
+import { createClient } from "@supabase/supabase-js";
+import { getSupabasePublicConfig } from "@/lib/supabase";
+
 const REQUEST_TIMEOUT_MS = 90_000;
+
+async function isAuthenticatedRequest(request: Request) {
+  const header = request.headers.get("authorization") ?? "";
+  const token = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
+  if (!token) return false;
+
+  const { url, anonKey } = getSupabasePublicConfig();
+  if (!url || !anonKey) return false;
+
+  const client = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const { data, error } = await client.auth.getUser(token);
+  return Boolean(data.user) && !error;
+}
 
 function isAbortError(error: unknown): boolean {
   return (
@@ -7,8 +25,20 @@ function isAbortError(error: unknown): boolean {
   );
 }
 
-export async function forwardImageToN8n(request: Request, webhookUrl: string): Promise<Response> {
-  if (!webhookUrl) {
+function webhookCandidates(webhookUrl: string | string[]) {
+  return [...new Set((Array.isArray(webhookUrl) ? webhookUrl : [webhookUrl]).map((url) => url.trim()).filter(Boolean))];
+}
+
+export async function forwardImageToN8n(
+  request: Request,
+  webhookUrl: string | string[],
+): Promise<Response> {
+  if (!(await isAuthenticatedRequest(request))) {
+    return Response.json({ success: false }, { status: 401 });
+  }
+
+  const urls = webhookCandidates(webhookUrl);
+  if (!urls.length) {
     return Response.json({ success: false }, { status: 503 });
   }
 
@@ -24,35 +54,45 @@ export async function forwardImageToN8n(request: Request, webhookUrl: string): P
     return Response.json({ success: false }, { status: 400 });
   }
 
-  const outbound = new FormData();
   const filename = file instanceof File && file.name ? file.name : "image.png";
-  outbound.append("data", file, filename);
+  const fileBuffer = await file.arrayBuffer();
+  let lastResponse: Response | null = null;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  for (const url of urls) {
+    const outbound = new FormData();
+    outbound.append("data", new Blob([fileBuffer], { type: file.type || "image/png" }), filename);
 
-  try {
-    const upstream = await fetch(encodeURI(webhookUrl), {
-      method: "POST",
-      body: outbound,
-      signal: controller.signal,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-    const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
-    const body = await upstream.arrayBuffer();
+    try {
+      const upstream = await fetch(encodeURI(url), {
+        method: "POST",
+        body: outbound,
+        signal: controller.signal,
+      });
 
-    return new Response(body, {
-      status: upstream.status,
-      statusText: upstream.statusText,
-      headers: { "content-type": contentType },
-    });
-  } catch (error) {
-    if (isAbortError(error)) {
-      return Response.json({ success: false }, { status: 504 });
+      const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
+      const body = await upstream.arrayBuffer();
+      lastResponse = new Response(body, {
+        status: upstream.status,
+        statusText: upstream.statusText,
+        headers: { "content-type": contentType },
+      });
+
+      if (upstream.ok || ![404, 405, 502, 503, 504].includes(upstream.status)) {
+        return lastResponse;
+      }
+    } catch (error) {
+      if (isAbortError(error)) {
+        return Response.json({ success: false }, { status: 504 });
+      }
+      console.error("[SnapCut] n8n forward failed");
+      lastResponse = Response.json({ success: false }, { status: 502 });
+    } finally {
+      clearTimeout(timeoutId);
     }
-    console.error("[SnapCut] n8n forward failed:", error);
-    return Response.json({ success: false }, { status: 502 });
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+  return lastResponse ?? Response.json({ success: false }, { status: 502 });
 }

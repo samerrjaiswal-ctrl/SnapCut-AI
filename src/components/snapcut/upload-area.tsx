@@ -50,7 +50,10 @@ export function UploadArea({
         type="file"
         accept={accept}
         className="sr-only"
-        onChange={(event: ChangeEvent<HTMLInputElement>) => handleFiles(event.target.files)}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => {
+          handleFiles(event.target.files);
+          event.target.value = "";
+        }}
       />
     </button>
   );

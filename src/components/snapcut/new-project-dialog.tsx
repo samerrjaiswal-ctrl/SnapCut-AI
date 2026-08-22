@@ -36,6 +36,7 @@ export function NewProjectDialog({ open, onOpenChange }: NewProjectDialogProps) 
             <Link
               key={tool.to}
               to={tool.to}
+              preload="intent"
               onClick={() => onOpenChange(false)}
               className="flex items-center gap-3 rounded-lg border border-outline-variant px-4 py-3 hover:border-secondary hover:bg-surface-container-low"
             >

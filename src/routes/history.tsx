@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AppLayout } from "@/components/layout/app-layout";
 import { HistoryCard } from "@/components/snapcut/history-card";
 import { EmptyState, ErrorState } from "@/components/snapcut/states";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,12 +62,12 @@ function HistoryPage() {
   }
 
   return (
-    <AppLayout contentClassName="p-container-margin-mobile md:p-container-margin-desktop">
+    <>
       <header className="mb-12">
-        <h1 className="font-headline-lg text-headline-lg font-bold text-on-surface mb-2 animate-text-smooth">
+        <h1 className="font-headline-lg text-headline-lg font-bold text-on-surface mb-2">
           History
         </h1>
-        <p className="font-body-md text-body-md text-on-surface-variant animate-text-smooth delay-2">
+        <p className="font-body-md text-body-md text-on-surface-variant">
           Manage and review your previously processed items.
         </p>
       </header>
@@ -117,6 +116,6 @@ function HistoryPage() {
           ))}
         </div>
       )}
-    </AppLayout>
+    </>
   );
 }

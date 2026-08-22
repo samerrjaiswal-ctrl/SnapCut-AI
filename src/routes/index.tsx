@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Icon } from "@/components/snapcut/icon";
 import { MarketingFooter, MarketingHeader } from "@/components/layout/marketing-shell";
 import { SmoothText } from "@/components/snapcut/smooth-text";
 import { stitchImages } from "@/data/assets";
+import { useAuth } from "@/components/providers/auth-provider";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -35,7 +37,33 @@ const TOOLS = [
   },
 ] as const;
 
+function useFontsReady() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const markReady = () => {
+      if (!cancelled) setReady(true);
+    };
+    if (typeof document === "undefined") return;
+    if (document.fonts.status === "loaded") {
+      markReady();
+      return;
+    }
+    void document.fonts.ready.then(markReady);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return ready;
+}
+
 function LandingPage() {
+  const { session, mfaPending } = useAuth();
+  const signedIn = Boolean(session) && !mfaPending;
+  const fontsReady = useFontsReady();
+
   return (
     <div className="bg-background text-on-background font-body-md text-body-md min-h-screen flex flex-col">
       <MarketingHeader active="home" />
@@ -43,22 +71,53 @@ function LandingPage() {
         <section className="py-24 md:py-32 flex flex-col items-center text-center gap-8">
           <div className="max-w-3xl space-y-6">
             <h1 className="font-display text-display text-primary tracking-tight">
-              <SmoothText text="Powerful Image Tools." className="block" as="span" />
+              <SmoothText
+                text="Powerful Image Tools."
+                className="block"
+                as="span"
+                animate={fontsReady}
+              />
               <br className="hidden md:block" />
-              <SmoothText text="Simple Workflow." className="block" as="span" />
+              <SmoothText
+                text="Simple Workflow."
+                className="block"
+                as="span"
+                delayMs={120}
+                animate={fontsReady}
+              />
             </h1>
-            <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto animate-text-smooth delay-3">
+            <p
+              className={`font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto ${
+                fontsReady ? "animate-text-smooth delay-4" : "opacity-0"
+              }`}
+            >
               Remove text from images, extract text with OCR, and create beautiful collages — all in
               one simple workspace. Engineered for professional creators and enterprise teams.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 animate-scale-in delay-4">
-              <Link
-                to="/signup"
-                className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-6 py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 btn-glow"
-              >
-                Get Started Free
-                <Icon name="arrow_forward" size={18} />
-              </Link>
+            <div
+              className={`flex flex-col sm:flex-row justify-center gap-4 pt-4 ${
+                fontsReady ? "animate-scale-in delay-5" : "opacity-0"
+              }`}
+            >
+              {signedIn ? (
+                <Link
+                  to="/dashboard"
+                  viewTransition
+                  className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-6 py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 btn-glow"
+                >
+                  Open Dashboard
+                  <Icon name="arrow_forward" size={18} />
+                </Link>
+              ) : (
+                <Link
+                  to="/signup"
+                  viewTransition
+                  className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-6 py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 btn-glow"
+                >
+                  Get Started Free
+                  <Icon name="arrow_forward" size={18} />
+                </Link>
+              )}
               <a
                 href="#features"
                 className="bg-surface-variant text-on-surface hover:bg-surface-container-highest px-6 py-3 rounded-lg border border-outline-variant font-label-md text-label-md"
@@ -86,25 +145,25 @@ function LandingPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-            {TOOLS.map((tool) => (
-              <Link
-                key={tool.to}
-                to={tool.to}
-                className="bg-surface rounded-xl border border-outline-variant p-8 flex flex-col gap-6 hover-lift text-left"
-              >
-                <div className="w-12 h-12 bg-surface-container-low rounded-lg flex items-center justify-center border border-outline-variant">
-                  <Icon name={tool.icon} filled className="text-secondary" />
+            {TOOLS.map((tool) =>
+              signedIn ? (
+                <Link
+                  key={tool.to}
+                  to={tool.to}
+                  preload="intent"
+                  className="bg-surface rounded-xl border border-outline-variant p-8 flex flex-col gap-6 hover-lift text-left active:scale-[0.99]"
+                >
+                  <ToolCardBody tool={tool} />
+                </Link>
+              ) : (
+                <div
+                  key={tool.to}
+                  className="bg-surface rounded-xl border border-outline-variant p-8 flex flex-col gap-6 text-left opacity-80"
+                >
+                  <ToolCardBody tool={tool} locked />
                 </div>
-                <div>
-                  <h3 className="font-headline-md text-headline-md text-primary mb-2">
-                    {tool.title}
-                  </h3>
-                  <p className="font-body-md text-body-md text-on-surface-variant">
-                    {tool.description}
-                  </p>
-                </div>
-              </Link>
-            ))}
+              ),
+            )}
           </div>
         </section>
 
@@ -148,5 +207,24 @@ function LandingPage() {
       </main>
       <MarketingFooter />
     </div>
+  );
+}
+
+function ToolCardBody({ tool, locked }: { tool: (typeof TOOLS)[number]; locked?: boolean }) {
+  return (
+    <>
+      <div className="w-12 h-12 bg-surface-container-low rounded-lg flex items-center justify-center border border-outline-variant">
+        <Icon name={tool.icon} filled className="text-secondary" />
+      </div>
+      <div>
+        <h3 className="font-headline-md text-headline-md text-primary mb-2">{tool.title}</h3>
+        <p className="font-body-md text-body-md text-on-surface-variant">{tool.description}</p>
+        {locked ? (
+          <p className="font-label-sm text-label-sm text-on-surface-variant mt-3">
+            Sign in to use this tool.
+          </p>
+        ) : null}
+      </div>
+    </>
   );
 }

@@ -6,11 +6,11 @@ type PageHeaderProps = {
 export function PageHeader({ title, description }: PageHeaderProps) {
   return (
     <header className="mb-8 md:mb-12">
-      <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface font-bold tracking-tight mb-2 animate-text-smooth">
+      <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface font-bold tracking-tight mb-2">
         {title}
       </h1>
       {description ? (
-        <p className="font-body-lg text-body-lg text-on-surface-variant animate-text-smooth delay-2">
+        <p className="font-body-lg text-body-lg text-on-surface-variant">
           {description}
         </p>
       ) : null}

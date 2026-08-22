@@ -19,14 +19,15 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (ready && !session) {
-      void navigate({ to: "/login", replace: true });
+    if (!ready) return;
+    if (!session) {
+      void navigate({ to: "/", replace: true, viewTransition: true });
     }
   }, [ready, session, navigate]);
 
+  if (session) return children;
   if (!ready) return <AuthSplash message="Checking your session…" />;
-  if (!session) return <AuthSplash message="Redirecting to login…" />;
-  return children;
+  return <AuthSplash message="Taking you home…" />;
 }
 
 export function RequireGuest({ children }: { children: React.ReactNode }) {
@@ -35,11 +36,10 @@ export function RequireGuest({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (ready && session) {
-      void navigate({ to: "/dashboard", replace: true });
+      void navigate({ to: "/", replace: true, viewTransition: true });
     }
   }, [ready, session, navigate]);
 
-  if (!ready) return <AuthSplash message="Checking your session…" />;
-  if (session) return <AuthSplash message="Redirecting to dashboard…" />;
+  if (session) return <AuthSplash message="Taking you home…" />;
   return children;
 }

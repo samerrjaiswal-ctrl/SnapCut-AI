@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Icon } from "@/components/snapcut/icon";
-import { getSignedFileUrl, type HistoryRecord } from "@/services/history-service";
+import { getSignedFileUrl, downloadHistoryFile, downloadFileName, type HistoryRecord } from "@/services/history-service";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,18 +22,34 @@ type HistoryCardProps = {
   onDelete?: (item: HistoryRecord) => void;
 };
 
-function downloadFromUrl(url: string, filename: string) {
+function saveBlob(blob: Blob, filename: string) {
+  const objectUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
+  a.href = objectUrl;
   a.download = filename;
-  a.target = "_blank";
-  a.rel = "noreferrer";
+  a.rel = "noopener";
+  document.body.appendChild(a);
   a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
 }
 
 export function HistoryCard({ item, onDelete }: HistoryCardProps) {
   const [open, setOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(item.thumbnail || null);
+  const thumbSrc =
+    item.category === "remove-text"
+      ? item.resultUrl || item.thumbnail || null
+      : item.thumbnail || null;
+  const [liveThumb, setLiveThumb] = useState<string | null>(thumbSrc);
+  const [thumbLoaded, setThumbLoaded] = useState(false);
+  const [thumbRetried, setThumbRetried] = useState(false);
+
+  useEffect(() => {
+    setLiveThumb(thumbSrc);
+    setThumbLoaded(false);
+    setThumbRetried(false);
+  }, [thumbSrc]);
 
   const icon =
     item.category === "remove-text"
@@ -43,8 +60,12 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
 
   async function copyText() {
     if (!item.extractedText) return;
-    await navigator.clipboard.writeText(item.extractedText);
-    toast.success("Copied extracted text.");
+    try {
+      await navigator.clipboard.writeText(item.extractedText);
+      toast.success("Copied extracted text.");
+    } catch {
+      toast.error("Could not copy. Open the item and copy the text manually.");
+    }
   }
 
   async function resolveFileUrls() {
@@ -56,27 +77,66 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
   }
 
   async function downloadItem() {
-    if (item.category === "image-to-text" && item.extractedText) {
-      const blob = new Blob([item.extractedText], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      downloadFromUrl(url, `${item.name.replace(/\.[^.]+$/, "")}.txt`);
-      URL.revokeObjectURL(url);
-      return;
+    try {
+      if (item.category === "image-to-text" && item.extractedText) {
+        const blob = new Blob([item.extractedText], { type: "text/plain" });
+        saveBlob(blob, `${item.name.replace(/\.[^.]+$/, "")}.txt`);
+        toast.success("Download started.");
+        return;
+      }
+      const path =
+        item.category === "remove-text"
+          ? item.resultPath || item.originalPath
+          : item.resultPath || item.originalPath;
+      if (!path) {
+        toast.error("This file is not available to download.");
+        return;
+      }
+      const blob = await downloadHistoryFile(path);
+      saveBlob(blob, downloadFileName(item.name, path));
+      toast.success("Download started.");
+    } catch (error) {
+      if (import.meta.env.DEV) console.error(error);
+      toast.error("Unable to download this file. Please try again.");
     }
-    const urls = await resolveFileUrls();
-    const url = urls.resultUrl || urls.originalUrl || item.thumbnail;
-    if (!url) {
-      toast.error("This file is not available to download.");
-      return;
-    }
-    downloadFromUrl(url, item.name);
   }
 
   return (
     <article className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden group hover:border-secondary hover-lift relative">
       <div className="aspect-[4/3] bg-surface-container relative">
-        {item.thumbnail ? (
-          <img className="w-full h-full object-cover" alt="" src={item.thumbnail} />
+        {liveThumb ? (
+          <>
+            {!thumbLoaded ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Icon name="progress_activity" className="text-secondary animate-spin" size={22} />
+              </div>
+            ) : null}
+            <img
+              className={cn("w-full h-full object-cover", !thumbLoaded && "opacity-0")}
+              alt={item.category === "remove-text" ? "Cleaned result" : ""}
+              src={liveThumb}
+              onLoad={() => setThumbLoaded(true)}
+              onError={() => {
+                if (thumbRetried) {
+                  setThumbLoaded(true);
+                  return;
+                }
+                setThumbRetried(true);
+                const path =
+                  item.category === "remove-text"
+                    ? item.resultPath || item.originalPath
+                    : item.originalPath || item.resultPath;
+                void getSignedFileUrl(path).then((fresh) => {
+                  if (fresh && fresh !== liveThumb) {
+                    setThumbLoaded(false);
+                    setLiveThumb(fresh);
+                    return;
+                  }
+                  setThumbLoaded(true);
+                });
+              }}
+            />
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-on-surface-variant">
             <Icon name={icon} size={32} />
@@ -106,7 +166,11 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
               onClick={() => {
                 void (async () => {
                   const urls = await resolveFileUrls();
-                  setPreviewUrl(urls.resultUrl || urls.originalUrl || item.thumbnail || null);
+                  setPreviewUrl(
+                    item.category === "remove-text"
+                      ? urls.resultUrl || item.resultUrl || item.thumbnail || null
+                      : urls.resultUrl || urls.originalUrl || item.thumbnail || null,
+                  );
                   setOpen(true);
                 })();
               }}
@@ -134,20 +198,21 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
           <DialogHeader>
             <DialogTitle>{item.name}</DialogTitle>
             <DialogDescription>
-              {item.category === "remove-text" ? "Text removal" : "Image to text"} · {item.date}
+              {item.category === "remove-text"
+                ? "Text removal"
+                : item.category === "collage"
+                  ? "Collage"
+                  : "Image to text"}{" "}
+              · {item.date}
             </DialogDescription>
           </DialogHeader>
-          {item.category === "remove-text" ? (
-            <div className="grid gap-3">
-              {previewUrl ? (
-                <img src={previewUrl} alt="Processed result" className="w-full rounded-lg border border-outline-variant" />
-              ) : null}
-            </div>
-          ) : (
+          {item.category === "image-to-text" ? (
             <pre className="max-h-72 overflow-auto whitespace-pre-wrap font-body-md text-body-md text-on-surface bg-surface-container-low rounded-lg p-4">
               {item.extractedText || "No text was saved for this item."}
             </pre>
-          )}
+          ) : previewUrl ? (
+            <img src={previewUrl} alt="Processed result" className="w-full rounded-lg border border-outline-variant" />
+          ) : null}
         </DialogContent>
       </Dialog>
     </article>

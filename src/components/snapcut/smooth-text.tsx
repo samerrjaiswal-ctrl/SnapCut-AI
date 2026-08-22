@@ -5,23 +5,24 @@ type SmoothTextProps = {
   className?: string;
   as?: "h1" | "h2" | "h3" | "p" | "span";
   glow?: boolean;
+  delayMs?: number;
+  animate?: boolean;
 };
 
-export function SmoothText({ text, className, as: Tag = "span", glow = false }: SmoothTextProps) {
-  const words = text.split(" ");
-
+export function SmoothText({
+  text,
+  className,
+  as: Tag = "span",
+  glow = false,
+  delayMs = 0,
+  animate = true,
+}: SmoothTextProps) {
   return (
-    <Tag className={cn(className, glow && "animate-text-glow")}>
-      {words.map((word, index) => (
-        <span
-          key={`${word}-${index}`}
-          className="inline-block animate-text-smooth"
-          style={{ animationDelay: `${index * 70}ms` }}
-        >
-          {word}
-          {index < words.length - 1 ? "\u00A0" : null}
-        </span>
-      ))}
+    <Tag
+      className={cn(animate ? "animate-text-smooth" : "opacity-0", glow && "animate-text-glow", className)}
+      style={delayMs ? { animationDelay: `${delayMs}ms` } : undefined}
+    >
+      {text}
     </Tag>
   );
 }

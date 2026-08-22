@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { Icon } from "@/components/snapcut/icon";
 import { useAuth } from "@/components/providers/auth-provider";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/auth/callback")({
   component: AuthCallbackPage,
@@ -11,9 +13,10 @@ export const Route = createFileRoute("/auth/callback")({
 });
 
 function AuthCallbackPage() {
-  const { session, ready } = useAuth();
+  const { session, ready, passwordRecovery } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [recoveryFlow, setRecoveryFlow] = useState(false);
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
@@ -25,13 +28,57 @@ function AuthCallbackPage() {
       hash.get("error");
     if (description) {
       setError(description.replace(/\+/g, " "));
+      return;
     }
+
+    const code = search.get("code");
+    const tokenHash = search.get("token_hash") || hash.get("token_hash");
+    const type = (search.get("type") || hash.get("type")) as EmailOtpType | null;
+    if (type === "recovery") {
+      setRecoveryFlow(true);
+      sessionStorage.setItem("snapcut-password-recovery", "1");
+    }
+
+    let cancelled = false;
+
+    async function completeAuth() {
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (!cancelled && exchangeError) {
+          setError(exchangeError.message.replace(/\+/g, " "));
+        }
+        return;
+      }
+
+      if (tokenHash && type) {
+        const { error: otpError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type,
+        });
+        if (!cancelled && otpError) {
+          setError(otpError.message.replace(/\+/g, " "));
+        }
+      }
+    }
+
+    void completeAuth();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (!ready || error) return;
     if (session) {
-      void navigate({ to: "/dashboard", replace: true });
+      const recovering =
+        recoveryFlow ||
+        passwordRecovery ||
+        sessionStorage.getItem("snapcut-password-recovery") === "1";
+      void navigate({
+        to: recovering ? "/auth/update-password" : "/",
+        replace: true,
+        viewTransition: true,
+      });
       return;
     }
 
@@ -40,7 +87,7 @@ function AuthCallbackPage() {
     }, 8000);
 
     return () => window.clearTimeout(timeout);
-  }, [error, navigate, ready, session]);
+  }, [error, navigate, passwordRecovery, ready, recoveryFlow, session]);
 
   if (error) {
     return (

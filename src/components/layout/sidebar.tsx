@@ -42,12 +42,13 @@ export function Sidebar({ activePath }: SidebarProps) {
             <Link
               key={item.to}
               to={item.to}
+              preload="intent"
               className={cn(
-                "flex items-center gap-3 rounded-lg px-4 py-2 font-label-md text-label-md transition-all",
+                "flex items-center gap-3 rounded-lg px-4 py-2 font-label-md text-label-md border-l-4",
                 index === 4 && "mt-4",
                 active
-                  ? "bg-secondary-container text-on-secondary-container border-l-4 border-secondary shadow-sm"
-                  : "text-on-primary-container hover:bg-on-primary-fixed-variant",
+                  ? "bg-secondary-container text-on-secondary-container border-secondary shadow-sm"
+                  : "text-on-primary-container border-transparent hover:bg-on-primary-fixed-variant",
               )}
               aria-current={active ? "page" : undefined}
             >
@@ -67,33 +68,27 @@ export function Sidebar({ activePath }: SidebarProps) {
             </span>
           </div>
           <span className="font-label-sm text-label-sm text-on-primary-container">
-            Unlock advanced AI tools.
+            {session?.plan === "pro" ? "Advanced AI tools are unlocked." : "Unlock advanced AI tools."}
           </span>
           <Link
             to="/pricing"
+            preload="intent"
             className="bg-secondary text-on-secondary hover:bg-secondary-container px-4 py-2 rounded font-label-md text-label-md transition-colors w-full text-center"
           >
-            Upgrade to Pro
+            {session?.plan === "pro" ? "View plans" : "Upgrade to Pro"}
           </Link>
         </div>
 
-        <Link
-          to="/settings"
-          className="flex items-center gap-3 text-on-primary-container hover:bg-on-primary-fixed-variant rounded-lg px-4 py-2 transition-all font-label-md text-label-md"
-        >
-          <Icon name="person" />
-          <span>Account</span>
-        </Link>
         <button
           type="button"
           onClick={() => {
             void (async () => {
               await logout();
-              toast.success("Signed out.");
-              await navigate({ to: "/login", replace: true });
+              toast.success("Signed out. Your files are still saved.");
+              await navigate({ to: "/", replace: true, viewTransition: true });
             })();
           }}
-          className="flex items-center gap-3 text-on-primary-container hover:bg-on-primary-fixed-variant rounded-lg px-4 py-2 transition-all font-label-md text-label-md text-left"
+          className="flex items-center gap-3 text-on-primary-container hover:bg-on-primary-fixed-variant rounded-lg px-4 py-2 font-label-md text-label-md text-left"
         >
           <Icon name="logout" className="text-error" />
           <span className="text-error">Logout</span>

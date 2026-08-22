@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Icon } from "@/components/snapcut/icon";
 import { MarketingFooter, MarketingHeader } from "@/components/layout/marketing-shell";
 import { SmoothText } from "@/components/snapcut/smooth-text";
+import { useAuth } from "@/components/providers/auth-provider";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/pricing")({
@@ -15,6 +16,8 @@ export const Route = createFileRoute("/pricing")({
 
 function PricingPage() {
   const [yearly, setYearly] = useState(false);
+  const { session, mfaPending } = useAuth();
+  const signedIn = Boolean(session) && !mfaPending;
   const proPrice = yearly ? 15 : 19;
 
   return (
@@ -95,10 +98,10 @@ function PricingPage() {
                 ))}
               </ul>
               <Link
-                to="/dashboard"
+                to={signedIn ? "/dashboard" : "/signup"}
                 className="w-full py-3 rounded-lg font-label-md text-label-md border-2 border-primary text-primary hover:bg-surface-container-low text-center mt-auto"
               >
-                Current Plan
+                {signedIn ? "Open Dashboard" : "Get Started"}
               </Link>
             </div>
 

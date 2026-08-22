@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -12,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { APP_SHELL_PATHS, AppLayout } from "@/components/layout/app-layout";
 import { Toaster } from "@/components/ui/sonner";
 import { Icon } from "@/components/snapcut/icon";
 import { SmoothText } from "@/components/snapcut/smooth-text";
@@ -121,8 +123,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
+        rel: "preload",
+        as: "style",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=block",
+      },
+      {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=block",
       },
       {
         rel: "stylesheet",
@@ -153,11 +160,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const inApp = APP_SHELL_PATHS.has(pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
+        {inApp ? (
+          <AppLayout>
+            <Outlet />
+          </AppLayout>
+        ) : (
+          <Outlet />
+        )}
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>

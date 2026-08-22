@@ -10,8 +10,7 @@ const MOBILE_ITEMS = [
     match: ["/dashboard", "/remove-text", "/image-to-text", "/collage-maker"],
   },
   { to: "/history", label: "History", icon: "history", match: ["/history"] },
-  { to: "/settings", label: "Account", icon: "person", match: [] },
-  { to: "/settings", label: "Settings", icon: "settings", match: ["/settings"] },
+  { to: "/settings", label: "Account", icon: "person", match: ["/settings"] },
 ] as const;
 
 type MobileNavProps = {
@@ -25,19 +24,15 @@ export function MobileNav({ activePath }: MobileNavProps) {
       aria-label="Primary"
     >
       {MOBILE_ITEMS.map((item) => {
-        const active =
-          item.label === "Account"
-            ? false
-            : item.match.some((path) => activePath === path || activePath.startsWith(`${path}/`));
-        const isAccount = item.label === "Account";
+        const active = item.match.some((path) => activePath === path || activePath.startsWith(`${path}/`));
 
         return (
           <Link
-            key={`${item.label}-${item.to}`}
+            key={item.to}
             to={item.to}
-            {...(isAccount ? { hash: "profile" } : {})}
+            preload="intent"
             className={cn(
-              "flex flex-col items-center justify-center rounded-full px-4 py-1 scale-90 duration-150 font-label-sm text-label-sm",
+              "flex flex-col items-center justify-center rounded-full px-4 py-1 scale-90 font-label-sm text-label-sm",
               active
                 ? "bg-secondary-container text-on-secondary-container"
                 : "text-on-surface-variant hover:bg-surface-container-high",

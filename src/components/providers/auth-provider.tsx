@@ -4,11 +4,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
+import { clearPasswordRecovery } from "@/lib/auth-recovery";
 import { getAuthRedirectTo, isSupabaseConfigured, supabase } from "@/lib/supabase";
 
 export type AppSession = {
@@ -23,13 +25,18 @@ type AuthContextValue = {
   session: AppSession | null;
   user: User | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<AppSession>;
+  mfaPending: boolean;
+  passwordRecovery: boolean;
+  completeMfa: () => void;
+  login: (email: string, password: string) => Promise<AppSession & { mfaPending: boolean }>;
   signup: (
     name: string,
     email: string,
     password: string,
   ) => Promise<{ session: AppSession | null; needsConfirmation: boolean }>;
   loginWithGoogle: () => Promise<void>;
+  sendPasswordResetCode: (email: string) => Promise<void>;
+  completePasswordRecovery: (nextPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<Pick<AppSession, "name">>) => Promise<void>;
   updatePassword: (currentPassword: string, nextPassword: string) => Promise<void>;
@@ -43,33 +50,52 @@ function displayNameFromUser(user: User, profileName?: string | null) {
   return profileName?.trim() || metaName.trim() || user.email?.split("@")[0] || "Creator";
 }
 
-async function sessionFromUser(user: User): Promise<AppSession> {
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, email, plan")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const plan = profile?.plan === "pro" || profile?.plan === "pro_plus" ? "pro" : "free";
-
+function fallbackSession(user: User): AppSession {
   return {
     userId: user.id,
-    name: displayNameFromUser(user, profile?.full_name),
-    email: profile?.email || user.email || "",
-    plan,
+    name: displayNameFromUser(user),
+    email: user.email || "",
+    plan: "free",
     twoFactorEnabled: false,
   };
+}
+
+async function sessionFromUser(user: User): Promise<AppSession> {
+  try {
+    const query = supabase
+      .from("profiles")
+      .select("full_name, email, plan")
+      .eq("id", user.id)
+      .maybeSingle();
+    const timedOut = new Promise<{ data: null }>((resolve) => {
+      setTimeout(() => resolve({ data: null }), 2000);
+    });
+    const { data: profile } = await Promise.race([query, timedOut]);
+    if (!profile) return fallbackSession(user);
+    const plan = profile.plan === "pro" || profile.plan === "pro_plus" ? "pro" : "free";
+    return {
+      userId: user.id,
+      name: displayNameFromUser(user, profile.full_name),
+      email: profile.email || user.email || "",
+      plan,
+      twoFactorEnabled: false,
+    };
+  } catch {
+    return fallbackSession(user);
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AppSession | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+  const holdGuestRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
 
     async function applyAuth(next: Session | null) {
+      if (holdGuestRef.current) return;
       if (!next?.user) {
         if (!cancelled) {
           setUser(null);
@@ -78,10 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       const appSession = await sessionFromUser(next.user);
-      if (!cancelled) {
-        setUser(next.user);
-        setSession(appSession);
-      }
+      if (holdGuestRef.current || cancelled) return;
+      setUser(next.user);
+      setSession(appSession);
     }
 
     if (!isSupabaseConfigured()) {
@@ -89,11 +114,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    void supabase.auth.getSession().then(({ data }) => {
-      void applyAuth(data.session).finally(() => {
+    const readyTimer = setTimeout(() => {
+      if (!cancelled) setReady(true);
+    }, 4000);
+
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => applyAuth(data.session))
+      .catch(() => undefined)
+      .finally(() => {
+        clearTimeout(readyTimer);
         if (!cancelled) setReady(true);
       });
-    });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       void applyAuth(nextSession);
@@ -101,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
+      clearTimeout(readyTimer);
       listener.subscription.unsubscribe();
     };
   }, []);
@@ -109,35 +142,87 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) {
       throw new Error("Authentication is not configured yet.");
     }
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
     if (error) throw new Error(getAuthErrorMessage(error, "Unable to sign in. Please try again."));
     if (!data.user) throw new Error("Unable to sign in. Please try again.");
     const next = await sessionFromUser(data.user);
     setUser(data.user);
     setSession(next);
-    return next;
+    return { ...next, mfaPending: false };
   }, []);
 
   const signup = useCallback(async (name: string, email: string, password: string) => {
     if (!isSupabaseConfigured()) {
       throw new Error("Authentication is not configured yet.");
     }
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: name },
-        emailRedirectTo: getAuthRedirectTo(),
-      },
-    });
-    if (error) throw new Error(getAuthErrorMessage(error, "Unable to create account. Please try again."));
-    if (data.session?.user) {
-      const next = await sessionFromUser(data.session.user);
-      setUser(data.session.user);
-      setSession(next);
-      return { session: next, needsConfirmation: false };
+    const redirectTo = getAuthRedirectTo();
+    holdGuestRef.current = true;
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: redirectTo
+          ? { data: { full_name: name }, emailRedirectTo: redirectTo }
+          : { data: { full_name: name } },
+      });
+      if (error) throw new Error(getAuthErrorMessage(error, "Unable to create account. Please try again."));
+      const alreadyRegistered =
+        Boolean(data.user) && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+      if (alreadyRegistered) {
+        throw new Error("An account with this email already exists. Try logging in.");
+      }
+      if (data.session) {
+        await supabase.auth.signOut();
+      }
+      setUser(null);
+      setSession(null);
+      return {
+        session: null,
+        needsConfirmation: Boolean(data.user) && !data.session,
+      };
+    } finally {
+      holdGuestRef.current = false;
     }
-    return { session: null, needsConfirmation: true };
+  }, []);
+
+  const sendPasswordResetCode = useCallback(async (email: string) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error("Authentication is not configured yet.");
+    }
+    const response = await fetch("/api/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        code?: string;
+      };
+      throw new Error(
+        getAuthErrorMessage(
+          { message: payload.error, code: payload.code, status: response.status },
+          "Unable to send the reset email. Please try again.",
+        ),
+      );
+    }
+  }, []);
+
+  const completePasswordRecovery = useCallback(async (nextPassword: string) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error("Authentication is not configured yet.");
+    }
+    const { error } = await supabase.auth.updateUser({ password: nextPassword });
+    if (error) {
+      throw new Error(getAuthErrorMessage(error, "Unable to update password. Please try again."));
+    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    clearPasswordRecovery();
   }, []);
 
   const loginWithGoogle = useCallback(async () => {
@@ -146,9 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: getAuthRedirectTo(),
-      },
+      options: { redirectTo: `${window.location.origin}/` },
     });
     if (error) {
       throw new Error(
@@ -158,20 +241,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Session can already be gone after account deletion.
+    }
     setUser(null);
     setSession(null);
   }, []);
 
+  const completeMfa = useCallback(() => undefined, []);
+
   const updateProfile = useCallback(
     async (patch: Partial<Pick<AppSession, "name">>) => {
-      if (!user || !patch.name?.trim()) return;
-      const { error } = await supabase
+      const nextName = patch.name?.trim();
+      if (!user || !nextName) {
+        throw new Error("Enter a name before saving.");
+      }
+
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
         .from("profiles")
-        .update({ full_name: patch.name.trim() })
-        .eq("id", user.id);
+        .update({ full_name: nextName, updated_at: now })
+        .eq("id", user.id)
+        .select("full_name")
+        .maybeSingle();
       if (error) throw error;
-      setSession((current) => (current ? { ...current, name: patch.name!.trim() } : current));
+
+      if (!data) {
+        const { error: upsertError } = await supabase.from("profiles").upsert({
+          id: user.id,
+          email: user.email ?? "",
+          full_name: nextName,
+          updated_at: now,
+        });
+        if (upsertError) throw upsertError;
+      }
+
+      const { error: metaError } = await supabase.auth.updateUser({
+        data: { full_name: nextName },
+      });
+      if (metaError) throw metaError;
+      setSession((current) => (current ? { ...current, name: nextName } : current));
     },
     [user],
   );
@@ -195,14 +306,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user,
       ready,
+      mfaPending: false,
+      passwordRecovery: false,
+      completeMfa,
       login,
       signup,
+      sendPasswordResetCode,
+      completePasswordRecovery,
       loginWithGoogle,
       logout,
       updateProfile,
       updatePassword,
     }),
-    [session, user, ready, login, signup, loginWithGoogle, logout, updateProfile, updatePassword],
+    [
+      session,
+      user,
+      ready,
+      completeMfa,
+      login,
+      signup,
+      sendPasswordResetCode,
+      completePasswordRecovery,
+      loginWithGoogle,
+      logout,
+      updateProfile,
+      updatePassword,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -12,6 +12,7 @@ export function ToolCard({ to, icon, title, description }: ToolCardProps) {
   return (
     <Link
       to={to}
+      preload="intent"
       className="group relative bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover-lift overflow-hidden flex flex-col h-full min-h-[240px]"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-surface-container-low to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

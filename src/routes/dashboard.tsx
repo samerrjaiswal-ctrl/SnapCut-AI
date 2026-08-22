@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/app-layout";
 import { ToolCard } from "@/components/snapcut/tool-card";
 import { NewProjectDialog } from "@/components/snapcut/new-project-dialog";
 import { Icon } from "@/components/snapcut/icon";
@@ -18,13 +17,18 @@ function DashboardPage() {
   const { session } = useAuth();
   const [projectOpen, setProjectOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
-  const [stats, setStats] = useState<HistoryStats>({ total: 0, removeText: 0, extractText: 0 });
+  const [stats, setStats] = useState<HistoryStats>({
+    total: 0,
+    removeText: 0,
+    extractText: 0,
+    collages: 0,
+  });
   const [recent, setRecent] = useState<HistoryRecord[]>([]);
   const name = session?.name?.split(" ")[0] ?? "Creator";
 
   useEffect(() => {
     if (!session) return;
-    void Promise.all([getHistoryStats(session.userId), listHistory(session.userId, "all")])
+    void Promise.all([getHistoryStats(session.userId), listHistory(session.userId, "all", 5)])
       .then(([nextStats, items]) => {
         setStats(nextStats);
         setRecent(items.slice(0, 5));
@@ -35,13 +39,13 @@ function DashboardPage() {
   }, [session]);
 
   return (
-    <AppLayout contentClassName="p-container-margin-mobile md:p-container-margin-desktop">
+    <>
       <div className="hidden md:flex justify-between items-end mb-8 md:mb-12 border-b border-outline-variant pb-6">
         <div>
-          <h1 className="font-display text-display text-on-background mb-2 animate-text-smooth">
+          <h1 className="font-display text-display text-on-background mb-2">
             Welcome back, {name}.
           </h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant animate-text-smooth delay-2">
+          <p className="font-body-lg text-body-lg text-on-surface-variant">
             {session?.email ? `Signed in as ${session.email}` : "Here is a quick overview of your workspace today."}
           </p>
         </div>
@@ -76,10 +80,10 @@ function DashboardPage() {
       </div>
 
       <div className="md:hidden mb-6">
-        <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-1 animate-text-smooth">
+        <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-1">
           Welcome back.
         </h1>
-        <p className="font-body-md text-body-md text-on-surface-variant animate-text-smooth delay-2">
+        <p className="font-body-md text-body-md text-on-surface-variant">
           Ready to create?
         </p>
       </div>
@@ -121,7 +125,7 @@ function DashboardPage() {
           <div className="flex flex-col gap-2">
             {recent.length === 0 ? (
               <p className="font-body-md text-body-md text-on-surface-variant py-6">
-                No operations yet. Run Remove Text or Image to Text to see activity here.
+                No operations yet. Run Remove Text, Image to Text, or Collage Maker to see activity here.
               </p>
             ) : (
               recent.map((item) => (
@@ -133,7 +137,13 @@ function DashboardPage() {
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="w-10 h-10 rounded bg-surface border border-outline-variant flex items-center justify-center text-outline group-hover:text-secondary">
                       <Icon
-                        name={item.category === "remove-text" ? "ink_eraser" : "article"}
+                        name={
+                          item.category === "remove-text"
+                            ? "ink_eraser"
+                            : item.category === "collage"
+                              ? "dashboard_customize"
+                              : "article"
+                        }
                         size={20}
                       />
                     </div>
@@ -172,6 +182,7 @@ function DashboardPage() {
               <div className="space-y-2 font-label-sm text-label-sm text-on-surface-variant">
                 <p>Text removal: {stats.removeText}</p>
                 <p>Image to text: {stats.extractText}</p>
+                <p>Collages: {stats.collages}</p>
               </div>
             </div>
           </div>
@@ -199,6 +210,6 @@ function DashboardPage() {
       </button>
 
       <NewProjectDialog open={projectOpen} onOpenChange={setProjectOpen} />
-    </AppLayout>
+    </>
   );
 }

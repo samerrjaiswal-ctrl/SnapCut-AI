@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/snapcut/icon";
+import { useAuth } from "@/components/providers/auth-provider";
 
 type MarketingHeaderProps = {
   active?: "home" | "features" | "pricing";
@@ -9,6 +10,8 @@ type MarketingHeaderProps = {
 
 export function MarketingHeader({ active }: MarketingHeaderProps) {
   const [open, setOpen] = useState(false);
+  const { session, mfaPending } = useAuth();
+  const signedIn = Boolean(session) && !mfaPending;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const current =
     active ?? (pathname === "/pricing" ? "pricing" : pathname === "/" ? "home" : undefined);
@@ -59,18 +62,32 @@ export function MarketingHeader({ active }: MarketingHeaderProps) {
       </div>
 
       <div className="hidden md:flex items-center gap-4">
-        <Link
-          to="/login"
-          className="font-label-md text-label-md text-on-surface-variant hover:text-secondary"
-        >
-          Log In
-        </Link>
-        <Link
-          to="/signup"
-          className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-4 py-2 rounded-lg font-label-md text-label-md btn-glow"
-        >
-          Get Started
-        </Link>
+        {signedIn ? (
+          <Link
+            to="/dashboard"
+            viewTransition
+            className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-4 py-2 rounded-lg font-label-md text-label-md btn-glow"
+          >
+            Open Dashboard
+          </Link>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              viewTransition
+              className="font-label-md text-label-md text-on-surface-variant hover:text-secondary"
+            >
+              Log In
+            </Link>
+            <Link
+              to="/signup"
+              viewTransition
+              className="bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant px-4 py-2 rounded-lg font-label-md text-label-md btn-glow"
+            >
+              Get Started
+            </Link>
+          </>
+        )}
       </div>
 
       <button
@@ -106,20 +123,35 @@ export function MarketingHeader({ active }: MarketingHeaderProps) {
           >
             Pricing
           </Link>
-          <Link
-            to="/login"
-            onClick={() => setOpen(false)}
-            className="px-4 py-2 rounded-lg text-on-surface"
-          >
-            Log In
-          </Link>
-          <Link
-            to="/signup"
-            onClick={() => setOpen(false)}
-            className="px-4 py-2 rounded-lg bg-primary-container text-on-primary text-center"
-          >
-            Get Started
-          </Link>
+          {signedIn ? (
+            <Link
+              to="/dashboard"
+              viewTransition
+              onClick={() => setOpen(false)}
+              className="px-4 py-2 rounded-lg bg-primary-container text-on-primary text-center"
+            >
+              Open Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                viewTransition
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 rounded-lg text-on-surface"
+              >
+                Log In
+              </Link>
+              <Link
+                to="/signup"
+                viewTransition
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 rounded-lg bg-primary-container text-on-primary text-center"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
       ) : null}
     </nav>
@@ -134,17 +166,17 @@ export function MarketingFooter() {
           SnapCut AI
         </span>
         <div className="flex gap-6 text-on-surface-variant">
-          <a className="hover:text-primary" href="#privacy">
+          <a className="hover:text-primary" href="mailto:hello@snapcut.ai?subject=Privacy">
             Privacy
           </a>
-          <a className="hover:text-primary" href="#terms">
+          <a className="hover:text-primary" href="mailto:hello@snapcut.ai?subject=Terms">
             Terms
           </a>
           <a className="hover:text-primary" href="mailto:hello@snapcut.ai">
             Contact
           </a>
         </div>
-        <p className="text-on-surface-variant text-sm">© 2024 SnapCut AI. All rights reserved.</p>
+        <p className="text-on-surface-variant text-sm">© 2026 SnapCut AI. All rights reserved.</p>
       </div>
     </footer>
   );

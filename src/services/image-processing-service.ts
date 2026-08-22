@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabase";
+
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 90_000;
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
@@ -59,6 +61,14 @@ function toUserFacingFetchError(error: unknown, fallback: string): ImageProcessi
 }
 
 async function postImage(path: string, file: File): Promise<Response> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    throw new ImageProcessingError("Please sign in to use this tool.");
+  }
+
   const formData = new FormData();
   formData.append("data", file);
 
@@ -70,6 +80,7 @@ async function postImage(path: string, file: File): Promise<Response> {
       method: "POST",
       body: formData,
       signal: controller.signal,
+      headers: { Authorization: `Bearer ${token}` },
     });
   } finally {
     clearTimeout(timeoutId);
@@ -77,6 +88,9 @@ async function postImage(path: string, file: File): Promise<Response> {
 }
 
 function throwForHttpStatus(status: number, fallback: string): never {
+  if (status === 401) {
+    throw new ImageProcessingError("Please sign in to use this tool.");
+  }
   if (status === 404 || status === 503) {
     throw new ImageProcessingError(
       "The processing service isn’t available yet. Activate the n8n workflow and try again.",
@@ -123,8 +137,10 @@ export async function removeTextFromImage(file: File): Promise<Blob> {
       );
     }
 
-    if (contentType.startsWith("image/")) return blob;
-    return new Blob([blob], { type: "image/png" });
+    const rawType = (contentType.split(";")[0] ?? "").trim();
+    const imageType =
+      rawType === "image/jpg" ? "image/jpeg" : rawType.startsWith("image/") ? rawType : "image/png";
+    return new Blob([blob], { type: imageType });
   } catch (error) {
     throw toUserFacingFetchError(error, "Unable to process this image right now. Please try again.");
   }
@@ -133,7 +149,20 @@ export async function removeTextFromImage(file: File): Promise<Blob> {
 type ExtractTextResponse = {
   success?: unknown;
   text?: unknown;
+  extractedText?: unknown;
+  data?: unknown;
 };
+
+function readExtractedText(payload: unknown): string | null {
+  if (typeof payload === "string") return payload;
+  if (Array.isArray(payload) && payload[0] !== undefined) return readExtractedText(payload[0]);
+  if (!payload || typeof payload !== "object") return null;
+  const record = payload as ExtractTextResponse;
+  if (typeof record.text === "string") return record.text;
+  if (typeof record.extractedText === "string") return record.extractedText;
+  if (typeof record.data === "string") return record.data;
+  return null;
+}
 
 export async function extractTextFromImage(file: File): Promise<string> {
   validateImageFile(file);
@@ -148,9 +177,9 @@ export async function extractTextFromImage(file: File): Promise<string> {
       throwForHttpStatus(response.status, "Unable to process this image right now. Please try again.");
     }
 
-    let payload: ExtractTextResponse;
+    let payload: unknown;
     try {
-      payload = (await response.json()) as ExtractTextResponse;
+      payload = await response.json();
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error("[SnapCut] Text extractor returned invalid JSON:", error);
@@ -158,17 +187,12 @@ export async function extractTextFromImage(file: File): Promise<string> {
       throw new ImageProcessingError("We received an unexpected response. Please try again.");
     }
 
-    if (payload.success !== true) {
-      throw new ImageProcessingError(
-        "We couldn't extract text from that image. Please try another one.",
-      );
-    }
-
-    if (typeof payload.text !== "string") {
+    const text = readExtractedText(payload);
+    if (text === null) {
       throw new ImageProcessingError("We received an unexpected response. Please try again.");
     }
 
-    return payload.text;
+    return text;
   } catch (error) {
     throw toUserFacingFetchError(error, "Unable to process this image right now. Please try again.");
   }

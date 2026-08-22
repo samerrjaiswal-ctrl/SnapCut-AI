@@ -22,7 +22,9 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ApiExtractTextRouteImport } from './routes/api/extract-text'
 import { Route as ApiRemoveTextRouteImport } from './routes/api/remove-text'
+import { Route as ApiResetPasswordRouteImport } from './routes/api/reset-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AuthUpdatePasswordRouteImport } from './routes/auth/update-password'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -89,9 +91,19 @@ const ApiRemoveTextRoute = ApiRemoveTextRouteImport.update({
   path: '/api/remove-text',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiResetPasswordRoute = ApiResetPasswordRouteImport.update({
+  id: '/api/reset-password',
+  path: '/api/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthUpdatePasswordRoute = AuthUpdatePasswordRouteImport.update({
+  id: '/auth/update-password',
+  path: '/auth/update-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -109,7 +121,9 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
+  '/api/reset-password': typeof ApiResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -125,7 +139,9 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
+  '/api/reset-password': typeof ApiResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -142,7 +158,9 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
+  '/api/reset-password': typeof ApiResetPasswordRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,7 +178,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/extract-text'
     | '/api/remove-text'
+    | '/api/reset-password'
     | '/auth/callback'
+    | '/auth/update-password'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -176,7 +196,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/extract-text'
     | '/api/remove-text'
+    | '/api/reset-password'
     | '/auth/callback'
+    | '/auth/update-password'
   id:
     | '__root__'
     | '/'
@@ -192,7 +214,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/extract-text'
     | '/api/remove-text'
+    | '/api/reset-password'
     | '/auth/callback'
+    | '/auth/update-password'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -209,7 +233,9 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ApiExtractTextRoute: typeof ApiExtractTextRoute
   ApiRemoveTextRoute: typeof ApiRemoveTextRoute
+  ApiResetPasswordRoute: typeof ApiResetPasswordRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthUpdatePasswordRoute: typeof AuthUpdatePasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -305,11 +331,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRemoveTextRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/reset-password': {
+      id: '/api/reset-password'
+      path: '/api/reset-password'
+      fullPath: '/api/reset-password'
+      preLoaderRoute: typeof ApiResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/update-password': {
+      id: '/auth/update-password'
+      path: '/auth/update-password'
+      fullPath: '/auth/update-password'
+      preLoaderRoute: typeof AuthUpdatePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -329,7 +369,9 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ApiExtractTextRoute: ApiExtractTextRoute,
   ApiRemoveTextRoute: ApiRemoveTextRoute,
+  ApiResetPasswordRoute: ApiResetPasswordRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthUpdatePasswordRoute: AuthUpdatePasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
