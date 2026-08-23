@@ -6,8 +6,8 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { OverlayLoader } from "@/components/snapcut/overlay-loader";
 import { getHistoryStats } from "@/services/history-service";
 import {
+  clearUnverifiedTotp,
   deleteOwnAccount,
-  enrollTotp,
   getPendingTotpFactorId,
   listVerifiedMfaFactors,
   saveNewPassword,
@@ -66,6 +66,7 @@ function SettingsPage() {
   const [removeCount, setRemoveCount] = useState(0);
   const [extractCount, setExtractCount] = useState(0);
   const [collageCount, setCollageCount] = useState(0);
+  const [snapyCount, setSnapyCount] = useState(0);
   const dirty = name !== (session?.name ?? "User Workspace");
 
   useEffect(() => {
@@ -84,6 +85,7 @@ function SettingsPage() {
       setRemoveCount(stats.removeText);
       setExtractCount(stats.extractText);
       setCollageCount(stats.collages);
+      setSnapyCount(stats.snapy);
     });
     void listVerifiedMfaFactors()
       .then((factors) => {
@@ -128,28 +130,27 @@ function SettingsPage() {
     setNewPassword("");
     setConfirmPassword("");
     setMfaCode("");
+    setMfaQr(null);
+    setMfaSecret(null);
     setQrImageReady(false);
     setQrScanned(false);
-    setPasswordStep("2fa");
     setMfaBusy(true);
     try {
+      await clearUnverifiedTotp().catch(() => undefined);
       const factors = await listVerifiedMfaFactors();
-      if (factors.length > 0 || twoFactor) {
+      if (factors.length > 0) {
         rememberFactorId(mfaFactorIdRef.current || mfaFactorId || factors[0]?.id || null);
         setTwoFactor(true);
-        setMfaQr(null);
-        setMfaSecret(null);
         setQrScanned(true);
+        setPasswordStep("2fa");
         return;
       }
-      const enrolled = await enrollTotp();
-      rememberFactorId(enrolled.id);
-      setMfaQr(enrolled.qr);
-      setMfaSecret(enrolled.secret);
-      setQrScanned(false);
+      setTwoFactor(false);
+      setPasswordStep("form");
+      requestAnimationFrame(() => newPasswordRef.current?.focus());
     } catch (error) {
-      setPasswordStep("idle");
-      toast.error(error instanceof Error ? error.message : "Unable to start 2FA.");
+      setPasswordStep("form");
+      toast.error(error instanceof Error ? error.message : "Unable to check authenticator status.");
     } finally {
       setMfaBusy(false);
     }
@@ -305,18 +306,13 @@ function SettingsPage() {
                         <Icon name="photo_camera" className="text-on-primary" />
                       </div>
                     </button>
-                    <button
-                      type="button"
-                      className="text-sm font-medium text-secondary"
-                      onClick={() => photoRef.current?.click()}
-                    >
-                      Change Photo
-                    </button>
                     <input
                       ref={photoRef}
                       type="file"
                       accept="image/*"
                       className="sr-only"
+                      aria-hidden="true"
+                      tabIndex={-1}
                       onChange={(e) => {
                         const nextFile = e.target.files?.[0];
                         if (!nextFile) return;
@@ -337,6 +333,8 @@ function SettingsPage() {
                       </label>
                       <input
                         id="full-name"
+                        name="name"
+                        autoComplete="name"
                         className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
                         type="text"
                         value={name}
@@ -352,6 +350,8 @@ function SettingsPage() {
                       </label>
                       <input
                         id="email"
+                        name="email"
+                        autoComplete="email"
                         className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 text-on-surface-variant"
                         readOnly
                         type="email"
@@ -428,6 +428,12 @@ function SettingsPage() {
                   width={`${Math.min(100, collageCount * 10)}%`}
                   accent="bg-primary-container"
                 />
+                <UsageBar
+                  label="Snapy"
+                  value={`${snapyCount}`}
+                  width={`${Math.min(100, snapyCount * 10)}%`}
+                  accent="bg-secondary-container"
+                />
               </div>
             </section>
 
@@ -453,7 +459,7 @@ function SettingsPage() {
                   <p className="text-sm text-on-surface-variant text-center">
                     {mfaQr
                       ? "Scan this QR in Google Authenticator, then enter the 6-digit code."
-                      : "Enter the 6-digit code from Google Authenticator."}
+                      : "Enter the 6-digit code from Google Authenticator to continue."}
                   </p>
                   {!qrScanned ? (
                     <div className="relative mx-auto h-44 w-44">
@@ -507,6 +513,13 @@ function SettingsPage() {
                     >
                       Confirm 2FA
                     </button>
+                    <button
+                      type="button"
+                      className="w-full text-on-surface-variant font-label-md text-label-md hover:underline"
+                      onClick={resetPasswordForm}
+                    >
+                      Cancel
+                    </button>
                   </form>
                 </div>
               ) : null}
@@ -514,21 +527,25 @@ function SettingsPage() {
                 <form className="space-y-6 animate-mfa-panel" onSubmit={handlePassword}>
                   {passwordError ? <p className="text-sm text-error">{passwordError}</p> : null}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                      <label className="block font-label-md text-label-md text-on-surface-variant mb-1">
-                        Current Password
-                      </label>
-                      <div className="flex items-center gap-3 w-full bg-secondary/10 border border-secondary rounded-lg px-4 py-2">
-                        <Icon name="check_circle" className="text-secondary" size={20} filled />
-                        <span className="text-sm text-on-surface">Verified by 2FA</span>
+                    {twoFactor ? (
+                      <div className="md:col-span-2">
+                        <label className="block font-label-md text-label-md text-on-surface-variant mb-1">
+                          Current Password
+                        </label>
+                        <div className="flex items-center gap-3 w-full bg-secondary/10 border border-secondary rounded-lg px-4 py-2">
+                          <Icon name="check_circle" className="text-secondary" size={20} filled />
+                          <span className="text-sm text-on-surface">Verified by 2FA</span>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
                     <div>
-                      <label className="block font-label-md text-label-md text-on-surface-variant mb-1">
+                      <label className="block font-label-md text-label-md text-on-surface-variant mb-1" htmlFor="new-password">
                         New Password
                       </label>
                       <input
+                        id="new-password"
                         ref={newPasswordRef}
+                        name="new-password"
                         className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 focus:border-secondary outline-none"
                         type="password"
                         autoComplete="new-password"
@@ -537,10 +554,12 @@ function SettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block font-label-md text-label-md text-on-surface-variant mb-1">
+                      <label className="block font-label-md text-label-md text-on-surface-variant mb-1" htmlFor="confirm-new-password">
                         Confirm New Password
                       </label>
                       <input
+                        id="confirm-new-password"
+                        name="confirm-new-password"
                         className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 focus:border-secondary outline-none"
                         type="password"
                         autoComplete="new-password"

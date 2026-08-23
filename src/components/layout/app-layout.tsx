@@ -5,8 +5,8 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { Icon } from "@/components/snapcut/icon";
 import { RequireAuth } from "@/components/auth/auth-guards";
 import { useAuth } from "@/components/providers/auth-provider";
-import { cn } from "@/lib/utils";
 import { SnapyWidget } from "@/components/snapy/snapy-widget";
+import { cn } from "@/lib/utils";
 
 type AppLayoutProps = {
   children: ReactNode;

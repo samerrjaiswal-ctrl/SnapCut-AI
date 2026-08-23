@@ -39,6 +39,11 @@ function AuthCallbackPage() {
       sessionStorage.setItem("snapcut-password-recovery", "1");
     }
 
+    if (!code && !(tokenHash && type)) {
+      setError("This sign-in link is missing or expired. Please try logging in again.");
+      return;
+    }
+
     let cancelled = false;
 
     async function completeAuth() {

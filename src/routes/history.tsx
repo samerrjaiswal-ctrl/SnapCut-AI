@@ -5,7 +5,7 @@ import { HistoryCard } from "@/components/snapcut/history-card";
 import { EmptyState, ErrorState } from "@/components/snapcut/states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/components/providers/auth-provider";
-import { deleteHistoryItem, listHistory, type HistoryRecord } from "@/services/history-service";
+import { deleteHistoryItem, listHistory, signHistoryRecords, type HistoryRecord } from "@/services/history-service";
 import { cn } from "@/lib/utils";
 import type { HistoryCategory } from "@/data/mock-history";
 
@@ -21,6 +21,7 @@ const TABS: { id: "all" | HistoryCategory; label: string }[] = [
   { id: "remove-text", label: "Remove Text" },
   { id: "image-to-text", label: "Image to Text" },
   { id: "collage", label: "Collages" },
+  { id: "snapy", label: "Snapy" },
 ];
 
 function HistoryPage() {
@@ -37,6 +38,13 @@ function HistoryPage() {
     try {
       const rows = await listHistory(session.userId, tab);
       setItems(rows);
+      setLoading(false);
+      try {
+        const signed = await signHistoryRecords(rows);
+        setItems(signed);
+      } catch {
+        // Keep the list visible even if signed image URLs fail.
+      }
     } catch (err) {
       if (import.meta.env.DEV) console.error(err);
       setError("Unable to load your history right now. Please try again.");

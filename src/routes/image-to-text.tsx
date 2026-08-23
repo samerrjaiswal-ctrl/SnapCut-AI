@@ -183,20 +183,25 @@ function ImageToTextPage() {
                 >
                   <Icon name="zoom_out" size={18} />
                 </button>
+                {imageUrl ? (
                 <button
                   type="button"
                   className="p-2 text-on-surface-variant hover:text-secondary hover:bg-surface-container-high rounded disabled:opacity-50"
                   title="Upload new"
+                  aria-label="Upload new image"
                   disabled={isProcessing}
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Icon name="upload" size={18} />
                 </button>
+                ) : null}
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/jpg"
                   className="sr-only"
+                  aria-hidden="true"
+                  tabIndex={-1}
                   disabled={isProcessing}
                   onChange={(e) => {
                     const selected = e.target.files?.[0];
@@ -241,6 +246,8 @@ function ImageToTextPage() {
                 <ErrorState description={errorMessage} onRetry={() => void processImage()} />
               ) : status === "ready" ? (
                 <textarea
+                  id="extracted-text"
+                  name="extracted-text"
                   className="w-full h-full min-h-[240px] resize-none border-none focus:ring-0 font-body-md text-body-md text-on-surface bg-transparent outline-none whitespace-pre-wrap"
                   spellCheck={false}
                   value={text}

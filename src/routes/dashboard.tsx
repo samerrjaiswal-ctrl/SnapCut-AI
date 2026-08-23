@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ToolCard } from "@/components/snapcut/tool-card";
 import { NewProjectDialog } from "@/components/snapcut/new-project-dialog";
 import { Icon } from "@/components/snapcut/icon";
 import { useAuth } from "@/components/providers/auth-provider";
 import { getHistoryStats, listHistory, type HistoryRecord, type HistoryStats } from "@/services/history-service";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
@@ -13,15 +14,89 @@ export const Route = createFileRoute("/dashboard")({
   }),
 });
 
+const SNAPY_NOTIFY_TEXT = "Generate images with Snapy now in just one prompt";
+
+function SnapyNotifyCard({
+  onClose,
+  leaving,
+  className,
+}: {
+  onClose: () => void;
+  leaving?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      role="status"
+      className={cn(
+        "dashboard-notify rounded-2xl border border-white/50 bg-white/35 px-3.5 py-3 shadow-[0_12px_28px_-16px_rgba(19,27,46,0.35)] backdrop-blur-md",
+        leaving && "dashboard-notify-out",
+        className,
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/10">
+          <Icon name="dashboard" filled className="text-secondary" size={22} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-label-sm text-label-sm text-on-surface mb-0.5">Notifications</p>
+          <p className="font-label-sm text-label-sm text-on-surface leading-snug">{SNAPY_NOTIFY_TEXT}</p>
+        </div>
+        <button
+          type="button"
+          className="shrink-0 text-on-surface-variant hover:text-on-surface"
+          aria-label="Dismiss notification"
+          onClick={onClose}
+        >
+          <Icon name="close" size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DashboardPage() {
   const { session } = useAuth();
   const [projectOpen, setProjectOpen] = useState(false);
-  const [notifyOpen, setNotifyOpen] = useState(false);
+  const [notifyOpen, setNotifyOpen] = useState(true);
+  const [notifyLeaving, setNotifyLeaving] = useState(false);
+  const notifyTimer = useRef<number | null>(null);
+
+  function dismissNotify() {
+    if (!notifyOpen || notifyLeaving) return;
+    setNotifyLeaving(true);
+    if (notifyTimer.current) window.clearTimeout(notifyTimer.current);
+    notifyTimer.current = window.setTimeout(() => {
+      setNotifyOpen(false);
+      setNotifyLeaving(false);
+      notifyTimer.current = null;
+    }, 400);
+  }
+
+  function toggleNotify() {
+    if (notifyOpen && !notifyLeaving) {
+      dismissNotify();
+      return;
+    }
+    if (notifyTimer.current) {
+      window.clearTimeout(notifyTimer.current);
+      notifyTimer.current = null;
+    }
+    setNotifyLeaving(false);
+    setNotifyOpen(true);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (notifyTimer.current) window.clearTimeout(notifyTimer.current);
+    };
+  }, []);
   const [stats, setStats] = useState<HistoryStats>({
     total: 0,
     removeText: 0,
     extractText: 0,
     collages: 0,
+    snapy: 0,
   });
   const [recent, setRecent] = useState<HistoryRecord[]>([]);
   const name = session?.name?.split(" ")[0] ?? "Creator";
@@ -40,8 +115,8 @@ function DashboardPage() {
 
   return (
     <>
-      <div className="hidden lg:flex justify-between items-end gap-4 mb-8 md:mb-12 border-b border-outline-variant pb-6">
-        <div className="min-w-0">
+      <div className="hidden lg:flex justify-between items-start gap-4 mb-8 md:mb-12 border-b border-outline-variant pb-6">
+        <div className="min-w-0 flex-1">
           <h1 className="font-display text-display text-on-background mb-2">
             Welcome back, {name}.
           </h1>
@@ -49,23 +124,22 @@ function DashboardPage() {
             {session?.email ? `Signed in as ${session.email}` : "Here is a quick overview of your workspace today."}
           </p>
         </div>
-        <div className="flex items-center gap-4 relative">
+        <div className="relative flex items-start gap-3 shrink-0">
+          {notifyOpen ? (
+            <SnapyNotifyCard
+              leaving={notifyLeaving}
+              onClose={dismissNotify}
+              className="absolute right-full top-0 mr-3 w-72 pointer-events-auto"
+            />
+          ) : null}
           <button
             type="button"
             className="flex items-center justify-center w-10 h-10 rounded-full border border-outline-variant bg-surface hover:bg-surface-variant text-on-surface-variant hover:text-on-surface"
             aria-label="Notifications"
-            onClick={() => setNotifyOpen((v) => !v)}
+            onClick={toggleNotify}
           >
             <Icon name="notifications" />
           </button>
-          {notifyOpen ? (
-            <div className="absolute right-0 top-12 w-72 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 z-20">
-              <p className="font-label-md text-label-md text-on-surface mb-2">Notifications</p>
-              <p className="font-body-md text-body-md text-on-surface-variant">
-                You have {stats.total} saved {stats.total === 1 ? "operation" : "operations"} in history.
-              </p>
-            </div>
-          ) : null}
           <button
             type="button"
             onClick={() => setProjectOpen(true)}
@@ -79,13 +153,20 @@ function DashboardPage() {
         </div>
       </div>
 
-      <div className="lg:hidden mb-6">
+      <div className="lg:hidden mb-6 relative">
         <p className="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-1">
           Welcome back, {name}.
         </p>
         <p className="font-body-md text-body-md text-on-surface-variant">
           Ready to create?
         </p>
+        {notifyOpen ? (
+          <SnapyNotifyCard
+            leaving={notifyLeaving}
+            onClose={dismissNotify}
+            className="absolute left-0 right-0 top-full z-20 mt-2"
+          />
+        ) : null}
       </div>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
@@ -125,7 +206,7 @@ function DashboardPage() {
           <div className="flex flex-col gap-2">
             {recent.length === 0 ? (
               <p className="font-body-md text-body-md text-on-surface-variant py-6">
-                No operations yet. Run Remove Text, Image to Text, or Collage Maker to see activity here.
+                No operations yet. Run Remove Text, Image to Text, Collage Maker, or Snapy to see activity here.
               </p>
             ) : (
               recent.map((item) => (
@@ -142,7 +223,9 @@ function DashboardPage() {
                             ? "ink_eraser"
                             : item.category === "collage"
                               ? "dashboard_customize"
-                              : "article"
+                              : item.category === "snapy"
+                                ? "dashboard"
+                                : "article"
                         }
                         size={20}
                       />
@@ -151,9 +234,11 @@ function DashboardPage() {
                       <h4 className="font-label-md text-label-md text-on-background truncate">
                         {item.name}
                       </h4>
-                      <p className="font-label-sm text-label-sm text-on-surface-variant truncate">
-                        {item.description}
-                      </p>
+                      {item.description.trim().toLowerCase() !== item.name.trim().toLowerCase() ? (
+                        <p className="font-label-sm text-label-sm text-on-surface-variant truncate">
+                          {item.description}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <span className="font-label-sm text-label-sm text-outline-variant shrink-0 ml-3">
@@ -183,6 +268,7 @@ function DashboardPage() {
                 <p>Text removal: {stats.removeText}</p>
                 <p>Image to text: {stats.extractText}</p>
                 <p>Collages: {stats.collages}</p>
+                <p>Snapy: {stats.snapy}</p>
               </div>
             </div>
           </div>

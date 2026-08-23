@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { copyImageFromLoader } from "@/lib/copy-image";
 import { Icon } from "@/components/snapcut/icon";
 import { getSignedFileUrl, downloadHistoryFile, downloadFileName, type HistoryRecord } from "@/services/history-service";
 import {
@@ -37,13 +38,20 @@ function saveBlob(blob: Blob, filename: string) {
 export function HistoryCard({ item, onDelete }: HistoryCardProps) {
   const [open, setOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(item.thumbnail || null);
+  const isOcr = item.category === "image-to-text";
+  const canCopyImage =
+    item.category === "snapy" || item.category === "remove-text" || item.category === "collage";
   const thumbSrc =
     item.category === "remove-text"
       ? item.resultUrl || item.thumbnail || null
-      : item.thumbnail || null;
+      : item.category === "snapy" || item.category === "collage"
+        ? item.resultUrl || item.thumbnail || null
+        : null;
   const [liveThumb, setLiveThumb] = useState<string | null>(thumbSrc);
   const [thumbLoaded, setThumbLoaded] = useState(false);
   const [thumbRetried, setThumbRetried] = useState(false);
+  const copyBlobRef = useRef<Blob | null>(null);
+  const copyPath = canCopyImage ? item.resultPath || item.originalPath : null;
 
   useEffect(() => {
     setLiveThumb(thumbSrc);
@@ -56,16 +64,40 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
       ? "ink_eraser"
       : item.category === "image-to-text"
         ? "article"
-        : "dashboard_customize";
+        : item.category === "snapy"
+          ? "dashboard"
+          : "dashboard_customize";
 
-  async function copyText() {
-    if (!item.extractedText) return;
-    try {
-      await navigator.clipboard.writeText(item.extractedText);
-      toast.success("Copied extracted text.");
-    } catch {
-      toast.error("Could not copy. Open the item and copy the text manually.");
+  function prefetchCopyBlob() {
+    if (!copyPath || copyBlobRef.current) return;
+    void downloadHistoryFile(copyPath)
+      .then((blob) => {
+        copyBlobRef.current = blob;
+      })
+      .catch(() => undefined);
+  }
+
+  function copyImage() {
+    if (!copyPath && !copyBlobRef.current) {
+      toast.error("This image is not available to copy.");
+      return;
     }
+    void copyImageFromLoader(async () => {
+      if (copyBlobRef.current) return copyBlobRef.current;
+      if (!copyPath) throw new Error("This image is not available to copy.");
+      const blob = await downloadHistoryFile(copyPath);
+      copyBlobRef.current = blob;
+      return blob;
+    })
+      .then(() => toast.success("Image copied."))
+      .catch(() => toast.error("Could not copy this image. Try Open instead."));
+  }
+
+  function copyText() {
+    if (!item.extractedText) return;
+    void navigator.clipboard.writeText(item.extractedText)
+      .then(() => toast.success("Copied extracted text."))
+      .catch(() => toast.error("Could not copy. Open the item and copy the text manually."));
   }
 
   async function resolveFileUrls() {
@@ -85,7 +117,7 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
         return;
       }
       const path =
-        item.category === "remove-text"
+        item.category === "remove-text" || item.category === "snapy"
           ? item.resultPath || item.originalPath
           : item.resultPath || item.originalPath;
       if (!path) {
@@ -104,7 +136,13 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
   return (
     <article className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden group hover:border-secondary hover-lift relative">
       <div className="aspect-[4/3] bg-surface-container relative">
-        {liveThumb ? (
+        {isOcr ? (
+          <div className="h-full w-full overflow-hidden p-4">
+            <p className="h-full overflow-hidden font-body-md text-body-md text-on-surface whitespace-pre-wrap break-words line-clamp-8">
+              {item.extractedText?.trim() || "No text was saved for this item."}
+            </p>
+          </div>
+        ) : liveThumb ? (
           <>
             {!thumbLoaded ? (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -113,7 +151,7 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
             ) : null}
             <img
               className={cn("w-full h-full object-cover", !thumbLoaded && "opacity-0")}
-              alt={item.category === "remove-text" ? "Cleaned result" : ""}
+              alt={item.category === "remove-text" ? "Cleaned result" : item.category === "snapy" ? "Generated image" : ""}
               src={liveThumb}
               onLoad={() => setThumbLoaded(true)}
               onError={() => {
@@ -122,10 +160,7 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
                   return;
                 }
                 setThumbRetried(true);
-                const path =
-                  item.category === "remove-text"
-                    ? item.resultPath || item.originalPath
-                    : item.originalPath || item.resultPath;
+                const path = item.resultPath || item.originalPath;
                 void getSignedFileUrl(path).then((fresh) => {
                   if (fresh && fresh !== liveThumb) {
                     setThumbLoaded(false);
@@ -153,7 +188,11 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
           </h3>
           <p className="font-label-sm text-label-sm text-on-surface-variant mt-1">{item.date}</p>
         </div>
-        <DropdownMenu>
+        <DropdownMenu
+          onOpenChange={(next) => {
+            if (next) prefetchCopyBlob();
+          }}
+        >
           <DropdownMenuTrigger
             className="text-on-surface-variant hover:text-on-surface p-1 rounded-md hover:bg-surface-container"
             aria-label={`More actions for ${item.name}`}
@@ -161,25 +200,28 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
             <Icon name="more_vert" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {canCopyImage ? (
+              <DropdownMenuItem onSelect={() => copyImage()}>Copy image</DropdownMenuItem>
+            ) : null}
+            {isOcr && item.extractedText ? (
+              <DropdownMenuItem onSelect={() => copyText()}>Copy text</DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem onClick={() => void downloadItem()}>Download</DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 void (async () => {
+                  if (isOcr) {
+                    setOpen(true);
+                    return;
+                  }
                   const urls = await resolveFileUrls();
-                  setPreviewUrl(
-                    item.category === "remove-text"
-                      ? urls.resultUrl || item.resultUrl || item.thumbnail || null
-                      : urls.resultUrl || urls.originalUrl || item.thumbnail || null,
-                  );
+                  setPreviewUrl(urls.resultUrl || item.resultUrl || item.thumbnail || urls.originalUrl || null);
                   setOpen(true);
                 })();
               }}
             >
               Open
             </DropdownMenuItem>
-            {item.extractedText ? (
-              <DropdownMenuItem onClick={() => void copyText()}>Copy text</DropdownMenuItem>
-            ) : null}
             {onDelete ? (
               <DropdownMenuItem
                 onClick={() => {
@@ -202,11 +244,13 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
                 ? "Text removal"
                 : item.category === "collage"
                   ? "Collage"
-                  : "Image to text"}{" "}
+                  : item.category === "snapy"
+                    ? "Snapy"
+                    : "Image to text"}{" "}
               · {item.date}
             </DialogDescription>
           </DialogHeader>
-          {item.category === "image-to-text" ? (
+          {isOcr ? (
             <pre className="max-h-72 overflow-auto whitespace-pre-wrap font-body-md text-body-md text-on-surface bg-surface-container-low rounded-lg p-4">
               {item.extractedText || "No text was saved for this item."}
             </pre>

@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/snapcut/icon";
+import { requestOpenSnapy } from "@/components/snapy/snapy-widget";
 
 const TOOLS = [
   { to: "/remove-text", icon: "ink_eraser", title: "Remove Text" },
@@ -20,6 +21,11 @@ type NewProjectDialogProps = {
 };
 
 export function NewProjectDialog({ open, onOpenChange }: NewProjectDialogProps) {
+  function openSnapy() {
+    onOpenChange(false);
+    window.setTimeout(() => requestOpenSnapy(), 50);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-surface-container-lowest border-outline-variant rounded-xl max-w-md">
@@ -46,6 +52,16 @@ export function NewProjectDialog({ open, onOpenChange }: NewProjectDialogProps) 
               <span className="font-label-md text-label-md text-on-surface">{tool.title}</span>
             </Link>
           ))}
+          <button
+            type="button"
+            onClick={openSnapy}
+            className="flex items-center gap-3 rounded-lg border border-outline-variant px-4 py-3 hover:border-secondary hover:bg-surface-container-low text-left"
+          >
+            <span className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+              <Icon name="dashboard" filled />
+            </span>
+            <span className="font-label-md text-label-md text-on-surface">Snapy</span>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

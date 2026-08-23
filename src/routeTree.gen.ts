@@ -23,6 +23,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ApiExtractTextRouteImport } from './routes/api/extract-text'
 import { Route as ApiRemoveTextRouteImport } from './routes/api/remove-text'
 import { Route as ApiResetPasswordRouteImport } from './routes/api/reset-password'
+import { Route as ApiSnapyAskRouteImport } from './routes/api/snapy-ask'
 import { Route as ApiSnapyEditRouteImport } from './routes/api/snapy-edit'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth/update-password'
@@ -97,6 +98,11 @@ const ApiResetPasswordRoute = ApiResetPasswordRouteImport.update({
   path: '/api/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSnapyAskRoute = ApiSnapyAskRouteImport.update({
+  id: '/api/snapy-ask',
+  path: '/api/snapy-ask',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSnapyEditRoute = ApiSnapyEditRouteImport.update({
   id: '/api/snapy-edit',
   path: '/api/snapy-edit',
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
   '/api/reset-password': typeof ApiResetPasswordRoute
+  '/api/snapy-ask': typeof ApiSnapyAskRoute
   '/api/snapy-edit': typeof ApiSnapyEditRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
   '/api/reset-password': typeof ApiResetPasswordRoute
+  '/api/snapy-ask': typeof ApiSnapyAskRoute
   '/api/snapy-edit': typeof ApiSnapyEditRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
   '/api/reset-password': typeof ApiResetPasswordRoute
+  '/api/snapy-ask': typeof ApiSnapyAskRoute
   '/api/snapy-edit': typeof ApiSnapyEditRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/api/extract-text'
     | '/api/remove-text'
     | '/api/reset-password'
+    | '/api/snapy-ask'
     | '/api/snapy-edit'
     | '/auth/callback'
     | '/auth/update-password'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/api/extract-text'
     | '/api/remove-text'
     | '/api/reset-password'
+    | '/api/snapy-ask'
     | '/api/snapy-edit'
     | '/auth/callback'
     | '/auth/update-password'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/api/extract-text'
     | '/api/remove-text'
     | '/api/reset-password'
+    | '/api/snapy-ask'
     | '/api/snapy-edit'
     | '/auth/callback'
     | '/auth/update-password'
@@ -246,6 +258,7 @@ export interface RootRouteChildren {
   ApiExtractTextRoute: typeof ApiExtractTextRoute
   ApiRemoveTextRoute: typeof ApiRemoveTextRoute
   ApiResetPasswordRoute: typeof ApiResetPasswordRoute
+  ApiSnapyAskRoute: typeof ApiSnapyAskRoute
   ApiSnapyEditRoute: typeof ApiSnapyEditRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthUpdatePasswordRoute: typeof AuthUpdatePasswordRoute
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/snapy-ask': {
+      id: '/api/snapy-ask'
+      path: '/api/snapy-ask'
+      fullPath: '/api/snapy-ask'
+      preLoaderRoute: typeof ApiSnapyAskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/snapy-edit': {
       id: '/api/snapy-edit'
       path: '/api/snapy-edit'
@@ -390,6 +410,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiExtractTextRoute: ApiExtractTextRoute,
   ApiRemoveTextRoute: ApiRemoveTextRoute,
   ApiResetPasswordRoute: ApiResetPasswordRoute,
+  ApiSnapyAskRoute: ApiSnapyAskRoute,
   ApiSnapyEditRoute: ApiSnapyEditRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthUpdatePasswordRoute: AuthUpdatePasswordRoute,

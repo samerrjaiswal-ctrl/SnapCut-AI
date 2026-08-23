@@ -102,11 +102,6 @@ export async function forwardSnapyEditToN8n(
   request: Request,
   webhookUrl: string | string[],
 ): Promise<Response> {
-  if (!(await isAuthenticatedRequest(request))) {
-    if (import.meta.env.DEV) console.info("[SnapCut] Snapy proxy blocked: no session");
-    return Response.json({ success: false }, { status: 401 });
-  }
-
   const urls = webhookCandidates(webhookUrl);
   if (!urls.length) {
     return Response.json({ success: false }, { status: 503 });
@@ -155,8 +150,13 @@ export async function forwardSnapyEditToN8n(
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), SNAPY_TIMEOUT_MS);
+    const onClientAbort = () => controller.abort();
+    request.signal.addEventListener("abort", onClientAbort, { once: true });
 
     try {
+      if (request.signal.aborted) {
+        return Response.json({ success: false, cancelled: true }, { status: 499 });
+      }
       const n8nUrl = new URL(url);
       if (prompt) n8nUrl.searchParams.set("prompt", prompt);
       const upstream = await fetch(n8nUrl, {
@@ -179,11 +179,15 @@ export async function forwardSnapyEditToN8n(
       }
     } catch (error) {
       if (isAbortError(error)) {
+        if (request.signal.aborted) {
+          return Response.json({ success: false, cancelled: true }, { status: 499 });
+        }
         return Response.json({ success: false }, { status: 504 });
       }
       console.error("[SnapCut] Snapy n8n forward failed");
       lastResponse = Response.json({ success: false }, { status: 502 });
     } finally {
+      request.signal.removeEventListener("abort", onClientAbort);
       clearTimeout(timeoutId);
     }
   }

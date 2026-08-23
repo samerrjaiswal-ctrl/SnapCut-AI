@@ -50,6 +50,8 @@ export function UploadArea({
         type="file"
         accept={accept}
         className="sr-only"
+        aria-hidden="true"
+        tabIndex={-1}
         onChange={(event: ChangeEvent<HTMLInputElement>) => {
           handleFiles(event.target.files);
           event.target.value = "";

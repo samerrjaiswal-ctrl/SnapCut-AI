@@ -68,7 +68,7 @@ function PricingPage() {
                   : "text-on-surface-variant hover:text-on-surface",
               )}
             >
-              Yearly <span className="text-secondary text-xs ml-1 font-bold">Save 20%</span>
+              Yearly <span className="text-secondary text-xs ml-1 font-bold">Save 21%</span>
             </button>
           </div>
 

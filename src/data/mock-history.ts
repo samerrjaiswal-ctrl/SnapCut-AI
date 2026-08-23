@@ -1,6 +1,6 @@
 import { stitchImages } from "@/data/assets";
 
-export type HistoryCategory = "remove-text" | "image-to-text" | "collage";
+export type HistoryCategory = "remove-text" | "image-to-text" | "collage" | "snapy";
 
 export type HistoryItem = {
   id: string;

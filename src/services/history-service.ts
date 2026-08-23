@@ -61,7 +61,7 @@ async function uploadBlob(
 
 async function uploadPreparedImage(
   userId: string,
-  folder: "remove-text" | "extract-text" | "collage",
+  folder: "remove-text" | "extract-text" | "collage" | "snapy",
   source: Blob,
 ) {
   const buffer = await source.arrayBuffer();
@@ -127,7 +127,7 @@ async function resolveUserId(fallback?: string) {
 export type ProcessingHistoryRow = {
   id: string;
   user_id: string;
-  operation_type: "remove_text" | "extract_text" | "collage";
+  operation_type: "remove_text" | "extract_text" | "collage" | "snapy";
   original_file_name: string;
   original_file_path: string | null;
   result_file_path: string | null;
@@ -158,6 +158,7 @@ export type HistoryStats = {
   removeText: number;
   extractText: number;
   collages: number;
+  snapy: number;
 };
 
 export async function uploadUserFile(path: string, file: Blob, contentType?: string) {
@@ -212,6 +213,7 @@ async function signedUrlMap(paths: Array<string | null | undefined>) {
 function categoryFromOperation(type: ProcessingHistoryRow["operation_type"]): HistoryCategory {
   if (type === "remove_text") return "remove-text";
   if (type === "extract_text") return "image-to-text";
+  if (type === "snapy") return "snapy";
   return "collage";
 }
 
@@ -220,11 +222,12 @@ function descriptionFromRow(row: ProcessingHistoryRow) {
     return row.extracted_text?.trim() ? row.extracted_text.trim().slice(0, 80) : "Extracted text";
   }
   if (row.operation_type === "collage") return "Created collage";
+  if (row.operation_type === "snapy") return "Generated with Snapy";
   return "Removed text from image";
 }
 
 function previewPathForRow(row: ProcessingHistoryRow) {
-  if (row.operation_type === "collage") return row.result_file_path;
+  if (row.operation_type === "collage" || row.operation_type === "snapy") return row.result_file_path;
   if (row.operation_type === "extract_text") return row.original_file_path ?? row.result_file_path;
   return row.result_file_path ?? row.original_file_path;
 }
@@ -234,7 +237,7 @@ function mapRow(row: ProcessingHistoryRow, urls: Map<string, string>): HistoryRe
   return {
     id: row.id,
     name: row.original_file_name,
-    date: format(new Date(row.created_at), "MMM d, yyyy"),
+    date: format(new Date(row.created_at), "MMM d, yyyy · h:mm a"),
     createdAt: row.created_at,
     category: categoryFromOperation(row.operation_type),
     thumbnail: (previewPath && urls.get(previewPath)) || "",
@@ -268,21 +271,19 @@ export async function listHistory(
   if (category === "remove-text") query = query.eq("operation_type", "remove_text");
   if (category === "image-to-text") query = query.eq("operation_type", "extract_text");
   if (category === "collage") query = query.eq("operation_type", "collage");
+  if (category === "snapy") query = query.eq("operation_type", "snapy");
 
   const { data, error } = await query;
   if (error) throw error;
 
   const rows = (data ?? []) as ProcessingHistoryRow[];
-  const urls = await signedUrlMap(
-    rows.flatMap((row) => [row.original_file_path, row.result_file_path, previewPathForRow(row)]),
-  );
-  return rows.map((row) => mapRow(row, urls));
+  return rows.map((row) => mapRow(row, new Map()));
 }
 
 export async function getHistoryStats(userId: string): Promise<HistoryStats> {
   const ownerId = await resolveUserId(userId);
   if (!ownerId) {
-    return { total: 0, removeText: 0, extractText: 0, collages: 0 };
+    return { total: 0, removeText: 0, extractText: 0, collages: 0, snapy: 0 };
   }
   const { data, error } = await supabase
     .from("processing_history")
@@ -296,12 +297,35 @@ export async function getHistoryStats(userId: string): Promise<HistoryStats> {
     removeText: rows.filter((row) => row.operation_type === "remove_text").length,
     extractText: rows.filter((row) => row.operation_type === "extract_text").length,
     collages: rows.filter((row) => row.operation_type === "collage").length,
+    snapy: rows.filter((row) => row.operation_type === "snapy").length,
   };
+}
+
+function previewPathForRecord(item: HistoryRecord) {
+  if (item.category === "collage" || item.category === "snapy") return item.resultPath;
+  if (item.category === "image-to-text") return item.originalPath ?? item.resultPath;
+  return item.resultPath ?? item.originalPath;
+}
+
+export async function signHistoryRecords(items: HistoryRecord[]): Promise<HistoryRecord[]> {
+  if (!items.length) return items;
+  const urls = await signedUrlMap(
+    items.flatMap((item) => [item.originalPath, item.resultPath, previewPathForRecord(item)]),
+  );
+  return items.map((item) => {
+    const previewPath = previewPathForRecord(item);
+    return {
+      ...item,
+      thumbnail: (previewPath && urls.get(previewPath)) || item.thumbnail,
+      originalUrl: (item.originalPath && urls.get(item.originalPath)) || null,
+      resultUrl: (item.resultPath && urls.get(item.resultPath)) || null,
+    };
+  });
 }
 
 export async function createHistoryRecord(input: {
   userId: string;
-  operationType: "remove_text" | "extract_text" | "collage";
+  operationType: "remove_text" | "extract_text" | "collage" | "snapy";
   originalFileName: string;
   originalFilePath?: string | null;
   resultFilePath?: string | null;
@@ -423,6 +447,30 @@ export async function saveCollageResult(input: {
     resultFilePath: resultPath,
     status: "completed",
     ...(input.metadata ? { metadata: input.metadata } : {}),
+  });
+  return resultPath;
+}
+
+export async function saveSnapyResult(input: {
+  userId?: string;
+  prompt?: string;
+  resultBlob: Blob;
+}) {
+  const userId = await resolveUserId(input.userId);
+  if (!userId) {
+    throw new Error("You need to be signed in to save this to History.");
+  }
+
+  const prompt = input.prompt?.trim() || "Snapy image";
+  const resultPath = await uploadPreparedImage(userId, "snapy", input.resultBlob);
+  await createHistoryRecord({
+    userId,
+    operationType: "snapy",
+    originalFileName: prompt.slice(0, 80),
+    originalFilePath: null,
+    resultFilePath: resultPath,
+    status: "completed",
+    metadata: { prompt, source: "snapy" },
   });
   return resultPath;
 }

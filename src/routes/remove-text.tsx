@@ -179,20 +179,25 @@ function RemoveTextPage() {
                 >
                   <Icon name="zoom_out" size={18} />
                 </button>
+                {imageUrl ? (
                 <button
                   type="button"
                   className="p-2 text-on-surface-variant hover:text-secondary hover:bg-surface-container-high rounded disabled:opacity-50"
                   onClick={() => fileInputRef.current?.click()}
                   title="Upload new"
+                  aria-label="Upload new image"
                   disabled={isProcessing}
                 >
                   <Icon name="upload" size={18} />
                 </button>
+                ) : null}
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/jpg"
                   className="sr-only"
+                  aria-hidden="true"
+                  tabIndex={-1}
                   disabled={isProcessing}
                   onChange={(e) => {
                     const selected = e.target.files?.[0];

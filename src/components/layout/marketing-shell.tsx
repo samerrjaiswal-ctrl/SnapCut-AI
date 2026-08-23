@@ -99,7 +99,7 @@ export function MarketingHeader({ active }: MarketingHeaderProps) {
         type="button"
         className="md:hidden flex items-center justify-center text-on-surface-variant p-2"
         aria-expanded={open}
-        aria-label="Open menu"
+        aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen((v) => !v)}
       >
         <Icon name={open ? "close" : "menu"} />

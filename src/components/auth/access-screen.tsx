@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Icon } from "@/components/snapcut/icon";
 import { ForgotPasswordDialog } from "@/components/auth/forgot-password-dialog";
 import { OverlayLoader } from "@/components/snapcut/overlay-loader";
@@ -45,6 +45,20 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
   useEffect(() => {
     setTab(defaultTab);
   }, [defaultTab]);
+
+  useEffect(() => {
+    const savedNotice = sessionStorage.getItem("snapcut-auth-notice");
+    const savedEmail = sessionStorage.getItem("snapcut-auth-pending-email");
+    if (savedNotice) {
+      sessionStorage.removeItem("snapcut-auth-notice");
+      setNotice(savedNotice);
+    }
+    if (savedEmail) {
+      sessionStorage.removeItem("snapcut-auth-pending-email");
+      setPendingConfirmEmail(savedEmail);
+      setLoginEmail((current) => current || savedEmail);
+    }
+  }, []);
 
   const loginErrors = useMemo(() => {
     const next: { email?: string; password?: string } = {};
@@ -115,15 +129,12 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
     try {
       const result = await signup(name.trim(), signupEmail, signupPassword);
       setTakenSignupEmail(null);
-      setLoginEmail(signupEmail);
-      if (!result.needsConfirmation) setLoginPassword(signupPassword);
-      setTab("login");
-      setPendingConfirmEmail(result.needsConfirmation ? signupEmail : null);
-      setNotice(
-        result.needsConfirmation
-          ? "Account created. Check your inbox (and spam) for the confirmation link, then log in."
-          : "Account created. Log in to continue.",
-      );
+      const nextNotice = result.needsConfirmation
+        ? "Account created. Check your inbox (and spam) for the confirmation link, then log in."
+        : "Account created. Log in to continue.";
+      sessionStorage.setItem("snapcut-auth-notice", nextNotice);
+      if (result.needsConfirmation) sessionStorage.setItem("snapcut-auth-pending-email", signupEmail);
+      await navigate({ to: "/login", replace: true, viewTransition: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to create account. Please try again.";
       const alreadyExists =
@@ -156,10 +167,11 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
   }
 
   function switchTab(next: "login" | "signup") {
-    setTab(next);
+    setShowPassword(false);
     setError(null);
     setNotice(null);
     if (next === "signup") setTakenSignupEmail(null);
+    void navigate({ to: next === "login" ? "/login" : "/signup", replace: true, viewTransition: true });
   }
 
   const fieldClass =
@@ -374,8 +386,8 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
                   <Rule ok={signupPassword.length >= 8} label="Password must be at least 8 characters." />
                   <Rule
                     ok={Boolean(confirm) && confirm === signupPassword}
-                    label="Passwords do not match."
-                    match
+                    label={confirm ? "Passwords do not match." : "Type the same password again."}
+                    match={Boolean(confirm)}
                   />
                 </ul>
                 <AuthField
@@ -488,9 +500,9 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
         onCompleted={(email) => {
           setLoginEmail(email);
           setLoginPassword("");
-          setTab("login");
           setError(null);
-          setNotice("Check your inbox and open the Reset password link.");
+          sessionStorage.setItem("snapcut-auth-notice", "Check your inbox and open the Reset password link.");
+          void navigate({ to: "/login", replace: true, viewTransition: true });
         }}
       />
       {loading ? (
@@ -505,10 +517,14 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
 
 function BrandMark() {
   return (
-    <div className="flex items-center gap-2 mb-2">
+    <Link
+      to="/"
+      className="flex items-center gap-2 mb-2 w-fit"
+      aria-label="SnapCut AI home"
+    >
       <Icon name="dashboard" filled className="text-secondary" />
       <span className="font-headline-md text-headline-md font-bold text-on-surface">SnapCut AI</span>
-    </div>
+    </Link>
   );
 }
 

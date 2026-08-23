@@ -2,9 +2,18 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { createPortal } from "react-dom";
 import { useRouterState } from "@tanstack/react-router";
 import { Icon } from "@/components/snapcut/icon";
-import { sendSnapyGenerate } from "@/services/snapy-service";
+import { isSnapyCancelled, sendSnapyGenerate } from "@/services/snapy-service";
+import { saveSnapyResult } from "@/services/history-service";
 import { getUserFacingErrorMessage } from "@/services/image-processing-service";
+import { copyImageFromLoader } from "@/lib/copy-image";
 import { cn } from "@/lib/utils";
+
+export const SNAPY_OPEN_EVENT = "snapcut:open-snapy";
+
+export function requestOpenSnapy() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(SNAPY_OPEN_EVENT));
+}
 
 const SUGGESTIONS = [
   "A golden retriever wearing sunglasses on a beach",
@@ -12,16 +21,30 @@ const SUGGESTIONS = [
   "A neon city street in the rain, cinematic",
 ];
 const GENERATE_AGAIN = "Generate another";
-const DOWNLOAD_RESULT = "Download this result";
+const COPY_RESULT = "Copy this image";
 const GENERATE_ERROR = "Snapy couldn't generate that image. Please try again.";
-const OPEN_SPIN_MS = 1200;
-const CLOSE_MS = 450;
-const CLEAR_MS = 420;
-const CLOUD_MS = 40_000;
+const STOPPED = "Stopped. The request was cancelled so credits stay unused.";
+
+type SpeechRec = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
+  onerror: ((event: { error?: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+};
+const CLOSE_MS = 280;
+const CLEAR_MS = 360;
+const EDIT_GRACE_MS = 4000;
 const SILENCE_RMS = 0.02;
 const SILENCE_MS = 1_100;
 const MIN_SPEECH_MS = 280;
 const MAX_RECORD_MS = 60_000;
+const STT_SETTLE_MS = 800;
+const STT_PREVIEW_MS = 450;
 
 type ChatMessage = {
   id: string;
@@ -44,8 +67,20 @@ function welcomeMessage(): ChatMessage {
   return {
     id: "welcome",
     role: "snapy",
-    text: "Describe the image you want, by typing or recording your voice.",
+    text: `👋 Hey — I’m Snapy.
+
+✨ Describe an image to generate it.
+
+⏸️ After you send, pause in a few seconds to edit — credits stay unused.`,
   };
+}
+
+function getSpeechRecognition(): (new () => SpeechRec) | null {
+  const speechWindow = window as Window & {
+    SpeechRecognition?: new () => SpeechRec;
+    webkitSpeechRecognition?: new () => SpeechRec;
+  };
+  return speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition || null;
 }
 
 function pickRecorderMime() {
@@ -61,7 +96,6 @@ function prefersReducedMotion() {
 export function SnapyWidget() {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
-  const [spinDir, setSpinDir] = useState<"open" | "close" | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [threadKey, setThreadKey] = useState(0);
@@ -69,6 +103,7 @@ export function SnapyWidget() {
   const [voice, setVoice] = useState<Blob | null>(null);
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [awaitingEdit, setAwaitingEdit] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [welcomeMessage()]);
   const listRef = useRef<HTMLDivElement>(null);
   const voiceFileRef = useRef<Blob | null>(null);
@@ -83,48 +118,31 @@ export function SnapyWidget() {
   const draftRef = useRef("");
   const openRef = useRef(false);
   const closingRef = useRef(false);
-  const spinDirRef = useRef<"open" | "close" | null>(null);
   const recordingRef = useRef(false);
   const busyRef = useRef(false);
   const sendLockRef = useRef(false);
   const prevPathRef = useRef<string | null>(null);
-  const openTimer = useRef<number | null>(null);
   const closeTimer = useRef<number | null>(null);
   const refreshTimer = useRef<number | null>(null);
   const chatGen = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const graceTimer = useRef<number | null>(null);
+  const gracePrompt = useRef("");
+  const gracePendingId = useRef<string | null>(null);
+  const awaitingEditRef = useRef(false);
+  const speechRef = useRef<SpeechRec | null>(null);
+  const speechBaseRef = useRef("");
+  const spokenRef = useRef("");
   const [lastResultUrl, setLastResultUrl] = useState<string | null>(null);
-  const [cloud, setCloud] = useState<"in" | "out" | null>(null);
-  const cloudHide = useRef<number | null>(null);
-  const cloudGone = useRef<number | null>(null);
+  const [lastResultBlob, setLastResultBlob] = useState<Blob | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const canSend = Boolean(draft.trim() || voice || recording);
   draftRef.current = draft;
   openRef.current = open;
   closingRef.current = closing;
-  spinDirRef.current = spinDir;
   recordingRef.current = recording;
   busyRef.current = busy;
-
-  function hideCloud() {
-    if (cloudHide.current) window.clearTimeout(cloudHide.current);
-    if (cloudGone.current) window.clearTimeout(cloudGone.current);
-    setCloud((current) => (current ? "out" : null));
-    cloudGone.current = window.setTimeout(() => setCloud(null), 320);
-  }
-
-  useEffect(() => {
-    if (pathname !== "/dashboard") {
-      setCloud(null);
-      return;
-    }
-    setCloud("in");
-    cloudHide.current = window.setTimeout(() => setCloud("out"), CLOUD_MS);
-    cloudGone.current = window.setTimeout(() => setCloud(null), CLOUD_MS + 320);
-    return () => {
-      if (cloudHide.current) window.clearTimeout(cloudHide.current);
-      if (cloudGone.current) window.clearTimeout(cloudGone.current);
-    };
-  }, [pathname]);
+  awaitingEditRef.current = awaitingEdit;
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -132,12 +150,12 @@ export function SnapyWidget() {
 
   useEffect(() => {
     return () => {
-      if (openTimer.current) window.clearTimeout(openTimer.current);
       if (closeTimer.current) window.clearTimeout(closeTimer.current);
       if (refreshTimer.current) window.clearTimeout(refreshTimer.current);
+      if (graceTimer.current) window.clearTimeout(graceTimer.current);
       if (maxRecordTimer.current) window.clearTimeout(maxRecordTimer.current);
-      if (cloudHide.current) window.clearTimeout(cloudHide.current);
-      if (cloudGone.current) window.clearTimeout(cloudGone.current);
+      stopSpeechToText();
+      abortRef.current?.abort();
       stopVoiceMonitor();
       stopRecording(true);
       messages.forEach((item) => {
@@ -149,41 +167,27 @@ export function SnapyWidget() {
 
   function openPanel() {
     if (openRef.current || closingRef.current) return;
-    hideCloud();
-    if (openTimer.current) {
-      window.clearTimeout(openTimer.current);
-      openTimer.current = null;
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
     }
     setOpen(true);
     setClosing(false);
-    if (prefersReducedMotion()) {
-      setSpinDir(null);
-      return;
-    }
-    setSpinDir("open");
-    openTimer.current = window.setTimeout(() => setSpinDir(null), OPEN_SPIN_MS);
   }
 
   function closePanel() {
     if (closingRef.current) return;
-    if (!openRef.current && spinDirRef.current !== "open") return;
-    if (openTimer.current) {
-      window.clearTimeout(openTimer.current);
-      openTimer.current = null;
-    }
+    if (!openRef.current) return;
     if (recordingRef.current) stopRecording(true);
     if (prefersReducedMotion()) {
       setOpen(false);
       setClosing(false);
-      setSpinDir(null);
       return;
     }
     setClosing(true);
-    setSpinDir("close");
     closeTimer.current = window.setTimeout(() => {
       setOpen(false);
       setClosing(false);
-      setSpinDir(null);
     }, CLOSE_MS);
   }
 
@@ -194,10 +198,18 @@ export function SnapyWidget() {
     }
     if (prevPathRef.current === pathname) return;
     prevPathRef.current = pathname;
-    if (openRef.current || closingRef.current || spinDirRef.current === "open") {
+    if (openRef.current || closingRef.current) {
       closePanel();
     }
   }, [pathname]);
+
+  useEffect(() => {
+    function onOpenRequest() {
+      openPanel();
+    }
+    window.addEventListener(SNAPY_OPEN_EVENT, onOpenRequest);
+    return () => window.removeEventListener(SNAPY_OPEN_EVENT, onOpenRequest);
+  }, []);
 
   function handleFabClick() {
     if (openRef.current || closingRef.current) {
@@ -233,8 +245,18 @@ export function SnapyWidget() {
     lastPromptRef.current = "";
     setVoice(null);
     setBusy(false);
+    setAwaitingEdit(false);
+    if (graceTimer.current) {
+      window.clearTimeout(graceTimer.current);
+      graceTimer.current = null;
+    }
+    gracePendingId.current = null;
     sendLockRef.current = false;
     setLastResultUrl(null);
+    setLastResultBlob(null);
+    abortRef.current?.abort();
+    abortRef.current = null;
+    stopSpeechToText();
   }
 
   function stopVoiceMonitor() {
@@ -249,6 +271,65 @@ export function SnapyWidget() {
     const ctx = audioCtxRef.current;
     audioCtxRef.current = null;
     if (ctx && ctx.state !== "closed") void ctx.close();
+  }
+
+  function startSpeechToText() {
+    stopSpeechToText();
+    const Recognition = getSpeechRecognition();
+    if (!Recognition) return;
+    const recognition = new Recognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = navigator.language || "en-IN";
+    spokenRef.current = "";
+    speechBaseRef.current = draftRef.current.trim() ? `${draftRef.current.trim()} ` : "";
+    recognition.onresult = (event) => {
+      let finals = "";
+      let interim = "";
+      for (let i = 0; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const piece = result?.[0]?.transcript ?? "";
+        if (result?.isFinal) finals += `${piece} `;
+        else interim += piece;
+      }
+      const next = `${speechBaseRef.current}${finals}${interim}`.trimStart();
+      spokenRef.current = next.trim();
+      setDraft(next);
+    };
+    recognition.onerror = () => {
+      /* keep listening even if one recognition pass errors */
+    };
+    recognition.onend = () => {
+      if (!recordingRef.current || speechRef.current !== recognition) return;
+      try {
+        recognition.start();
+      } catch {
+        /* already running */
+      }
+    };
+    speechRef.current = recognition;
+    try {
+      recognition.start();
+    } catch {
+      speechRef.current = null;
+    }
+  }
+
+  function stopSpeechToText() {
+    const recognition = speechRef.current;
+    speechRef.current = null;
+    if (!recognition) return;
+    try {
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.stop();
+    } catch {
+      try {
+        recognition.abort();
+      } catch {
+        /* already stopped */
+      }
+    }
   }
 
   function startVoiceMonitor(stream: MediaStream) {
@@ -291,10 +372,61 @@ export function SnapyWidget() {
     maxRecordTimer.current = window.setTimeout(() => finishVoiceAndSend(), MAX_RECORD_MS);
   }
 
+  function stopRecorder(): Promise<Blob | null> {
+    return new Promise((resolve) => {
+      const recorder = recorderRef.current;
+      recorderRef.current = null;
+      if (!recorder || recorder.state === "inactive") {
+        resolve(voiceFileRef.current);
+        return;
+      }
+      const finish = () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        if (blob.size > 0) {
+          voiceFileRef.current = blob;
+          setVoice(blob);
+          resolve(blob);
+          return;
+        }
+        resolve(voiceFileRef.current);
+      };
+      recorder.onstop = finish;
+      try {
+        if (typeof recorder.requestData === "function") recorder.requestData();
+        recorder.stop();
+      } catch {
+        finish();
+      }
+    });
+  }
+
   function finishVoiceAndSend() {
     if (!recordingRef.current) return;
-    autoSendRef.current = true;
-    stopRecording(false);
+    autoSendRef.current = false;
+    stopVoiceMonitor();
+    setRecording(false);
+    recordingRef.current = false;
+    void stopRecorder().then((blob) => settleTranscriptThenSend(blob));
+  }
+
+  async function settleTranscriptThenSend(voiceBlob?: Blob | null) {
+    stopSpeechToText();
+    await new Promise((resolve) => window.setTimeout(resolve, STT_SETTLE_MS));
+    const spoken = draftRef.current.trim() || spokenRef.current.trim();
+    const audio = voiceBlob ?? voiceFileRef.current;
+    if (!spoken && !audio) {
+      voiceFileRef.current = null;
+      setVoice(null);
+      setMessages((current) => [
+        ...current,
+        { id: newId(), role: "snapy", text: "🎙️ Missed that.\n\nSay it again, or type it." },
+      ]);
+      return;
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, STT_PREVIEW_MS));
+    void submitGenerate(spoken, spoken ? null : audio, true);
   }
 
   async function startRecording() {
@@ -312,7 +444,6 @@ export function SnapyWidget() {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
-        const shouldSend = autoSendRef.current;
         autoSendRef.current = false;
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || mimeType || "audio/webm" });
         stream.getTracks().forEach((track) => track.stop());
@@ -320,22 +451,27 @@ export function SnapyWidget() {
         if (blob.size > 0) {
           voiceFileRef.current = blob;
           setVoice(blob);
-          if (shouldSend) void submitGenerate(draftRef.current, blob);
         }
       };
       recorderRef.current = recorder;
-      recorder.start();
       setRecording(true);
+      startSpeechToText();
+      recorder.start(250);
       startVoiceMonitor(stream);
     } catch {
       setMessages((current) => [
         ...current,
-        { id: newId(), role: "snapy", text: "Microphone access is needed for voice prompts. You can also type a description." },
+        {
+          id: newId(),
+          role: "snapy",
+          text: "🎙️ Mic access needed for voice.\n\nYou can also type the prompt.",
+        },
       ]);
     }
   }
 
   function stopRecording(discard: boolean) {
+    stopSpeechToText();
     stopVoiceMonitor();
     if (discard) autoSendRef.current = false;
     const recorder = recorderRef.current;
@@ -366,44 +502,106 @@ export function SnapyWidget() {
     sendNow();
   }
 
-  async function submitGenerate(promptText: string, voiceOverride?: Blob | null) {
+  async function submitGenerate(promptText: string, voiceOverride?: Blob | null, fromVoice = false) {
     if (busyRef.current || sendLockRef.current) return;
     sendLockRef.current = true;
     const voiceBlob = voiceOverride ?? voiceFileRef.current ?? voice;
     const text = promptText.trim();
+    const hasVoice = fromVoice || Boolean(voiceBlob && voiceBlob.size > 0);
     if (!voiceBlob && !text) {
       sendLockRef.current = false;
       setMessages((current) => [
         ...current,
-        { id: newId(), role: "snapy", text: "Describe the image you want — tap the mic or type a prompt." },
+        { id: newId(), role: "snapy", text: "📝 Empty prompt.\n\nSay something, or describe the image." },
       ]);
       return;
     }
 
-    const userText = [text, voiceBlob ? "Voice prompt attached" : ""].filter(Boolean).join(" · ");
-    const pendingId = newId();
+    if (!text && !hasVoice) {
+      sendLockRef.current = false;
+      voiceFileRef.current = null;
+      setVoice(null);
+      setMessages((current) => [
+        ...current,
+        {
+          id: newId(),
+          role: "snapy",
+          text: "📝 I need the words first.\n\nSpeak again, or type your image prompt.",
+        },
+      ]);
+      return;
+    }
     lastPromptRef.current = text;
+    setDraft("");
     setMessages((current) => [
       ...current,
-      { id: newId(), role: "user", text: userText },
-      { id: pendingId, role: "snapy", text: "Creating your image…", pending: true, typing: true },
+      { id: newId(), role: "user", text: text || "🎙️ Voice prompt" },
     ]);
-    setDraft("");
+
+    const pendingId = newId();
+    gracePrompt.current = text;
+    gracePendingId.current = pendingId;
+    setMessages((current) => [
+      ...current,
+      {
+        id: pendingId,
+        role: "snapy",
+        text: `⏳ Starting in a few seconds…
+
+⏸️ Tap pause to edit the prompt
+💳 Credits stay unused until then`,
+        pending: true,
+      },
+    ]);
     setBusy(true);
+    setAwaitingEdit(true);
+    setVoice(null);
     const gen = chatGen.current;
+    const startGenerate = () => {
+      if (gen !== chatGen.current) return;
+      graceTimer.current = null;
+      setAwaitingEdit(false);
+      void runImageGenerate(text, text ? null : voiceBlob, pendingId, gen);
+    };
+    if (prefersReducedMotion()) {
+      startGenerate();
+      return;
+    }
+    graceTimer.current = window.setTimeout(startGenerate, EDIT_GRACE_MS);
+  }
+
+  async function runImageGenerate(text: string, voiceBlob: Blob | null, pendingId: string, gen: number) {
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setMessages((current) =>
+      current.map((item) =>
+        item.id === pendingId
+          ? { ...item, text: "Creating your image…", pending: true, typing: true }
+          : item,
+      ),
+    );
 
     try {
-      const result = await sendSnapyGenerate({ voice: voiceBlob, prompt: text });
+      const result = await sendSnapyGenerate({ voice: voiceBlob, prompt: text, signal: controller.signal });
       if (gen !== chatGen.current) return;
       const resultUrl = URL.createObjectURL(result);
       setLastResultUrl(resultUrl);
+      setLastResultBlob(result);
       setMessages((current) =>
         current.map((item) =>
           item.id === pendingId
-            ? { id: pendingId, role: "snapy", text: "Here’s the image I generated.", imageUrl: resultUrl }
+            ? {
+                id: pendingId,
+                role: "snapy",
+                text: "🎨 Here’s the image I generated.",
+                imageUrl: resultUrl,
+              }
             : item,
         ),
       );
+      void saveSnapyResult({ prompt: text || "Voice prompt", resultBlob: result }).catch((error) => {
+        if (import.meta.env.DEV) console.error("[SnapCut] Snapy history save failed:", error);
+      });
     } catch (error) {
       if (gen !== chatGen.current) return;
       setMessages((current) =>
@@ -412,32 +610,96 @@ export function SnapyWidget() {
             ? {
                 id: pendingId,
                 role: "snapy",
-                text: getUserFacingErrorMessage(error, GENERATE_ERROR),
+                text: isSnapyCancelled(error) ? STOPPED : getUserFacingErrorMessage(error, GENERATE_ERROR),
               }
             : item,
         ),
       );
     } finally {
       sendLockRef.current = false;
+      abortRef.current = null;
       if (gen === chatGen.current) {
         setBusy(false);
+        setAwaitingEdit(false);
         voiceFileRef.current = null;
         setVoice(null);
       }
     }
   }
 
-  function downloadLastResult() {
-    if (!lastResultUrl) return;
-    const a = document.createElement("a");
-    a.href = lastResultUrl;
-    a.download = "snapy-image.png";
-    a.click();
+  function stopGeneration() {
+    if (awaitingEditRef.current || graceTimer.current) {
+      if (graceTimer.current) {
+        window.clearTimeout(graceTimer.current);
+        graceTimer.current = null;
+      }
+      const pendingId = gracePendingId.current;
+      const prompt = gracePrompt.current;
+      gracePendingId.current = null;
+      setAwaitingEdit(false);
+      setBusy(false);
+      sendLockRef.current = false;
+      voiceFileRef.current = null;
+      setVoice(null);
+      setDraft(prompt);
+      setMessages((current) =>
+        current.map((item) =>
+          item.id === pendingId
+            ? {
+                id: item.id,
+                role: "snapy",
+                text: `⏸️ Paused
+
+Your prompt is back in the box — edit it and send.
+💳 No credits were used.`,
+              }
+            : item,
+        ),
+      );
+      return;
+    }
+    abortRef.current?.abort();
+  }
+
+  async function copyLastResult() {
+    const blob = lastResultBlob;
+    if (!blob) return;
+    try {
+      await copyImageFromLoader(async () => blob);
+      setMessages((current) => [
+        ...current,
+        { id: newId(), role: "snapy", text: "📋 Copied the image." },
+      ]);
+    } catch {
+      setMessages((current) => [
+        ...current,
+        { id: newId(), role: "snapy", text: "📋 Couldn’t copy that image.\n\nTry again from the image." },
+      ]);
+    }
+  }
+
+  async function copyMessageImage(imageUrl: string) {
+    try {
+      await copyImageFromLoader(async () => {
+        const response = await fetch(imageUrl);
+        if (!response.ok) throw new Error("Could not load this image.");
+        return response.blob();
+      });
+      setMessages((current) => [
+        ...current,
+        { id: newId(), role: "snapy", text: "📋 Copied the image." },
+      ]);
+    } catch {
+      setMessages((current) => [
+        ...current,
+        { id: newId(), role: "snapy", text: "📋 Couldn’t copy that image.\n\nTry again." },
+      ]);
+    }
   }
 
   function handleQuickReply(label: string) {
-    if (label.toLowerCase().includes("download")) {
-      downloadLastResult();
+    if (label === COPY_RESULT) {
+      void copyLastResult();
       return;
     }
     void submitGenerate(draft || lastPromptRef.current || "Generate another variation of the last image.");
@@ -460,7 +722,7 @@ export function SnapyWidget() {
             "fixed inset-x-3 top-[calc(4.5rem+env(safe-area-inset-top))] bottom-[calc(5.5rem+env(safe-area-inset-bottom))] rounded-[28px]",
             "lg:inset-auto lg:right-6 lg:bottom-24 lg:h-[min(40rem,calc(100dvh-7rem))] lg:w-[24rem]",
           )}
-          aria-label="Snapy chatbot"
+          aria-label="Snapy image generator"
         >
           <header className="snapy-header flex items-center gap-3 px-4 py-3">
             <div className="grid h-10 w-10 place-items-center rounded-full bg-white/95 ring-2 ring-white/70">
@@ -518,13 +780,22 @@ export function SnapyWidget() {
                       </div>
                     ) : null}
                     {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt="Snapy generated image"
-                        className="mb-2 w-full max-h-[min(280px,40dvh)] rounded-xl border border-[#D7E4FF] bg-white object-contain"
-                      />
+                      <div className="mb-2">
+                        <img
+                          src={item.imageUrl}
+                          alt="Snapy generated image"
+                          className="w-full max-h-[min(280px,40dvh)] rounded-xl border border-[#D7E4FF] bg-white object-contain"
+                        />
+                        <button
+                          type="button"
+                          className="snapy-btn mt-2 rounded-full border border-[#4F7DFF] bg-white/85 px-3 py-1 text-[12px] text-[#3D6DFF]"
+                          onClick={() => void copyMessageImage(item.imageUrl!)}
+                        >
+                          Copy image
+                        </button>
+                      </div>
                     ) : null}
-                    {item.text && !item.typing ? <p>{item.text}</p> : null}
+                    {item.text && !item.typing ? <p className="whitespace-pre-wrap">{item.text}</p> : null}
                   </div>
                 </div>
               ))}
@@ -560,9 +831,9 @@ export function SnapyWidget() {
                 <button
                   type="button"
                   className="snapy-btn rounded-full border border-[#4F7DFF] bg-white/85 px-4 py-2 text-[13px] text-[#3D6DFF]"
-                  onClick={() => handleQuickReply(DOWNLOAD_RESULT)}
+                  onClick={() => handleQuickReply(COPY_RESULT)}
                 >
-                  {DOWNLOAD_RESULT}
+                  {COPY_RESULT}
                 </button>
               </div>
             ) : null}
@@ -573,8 +844,11 @@ export function SnapyWidget() {
             {recording || voice ? (
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 {recording ? (
-                  <span className="snapy-chip-in inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-[12px] text-[#ba1a1a] shadow-sm">
-                    Listening… pause to send
+                  <span className="snapy-chip-in inline-flex max-w-full items-start gap-2 rounded-2xl bg-white/90 px-3 py-2 text-[12px] text-[#1B1B1F] shadow-sm">
+                    <span className="shrink-0 text-[#ba1a1a]">Listening</span>
+                    <span className="min-w-0 break-words">
+                      {draft.trim() || "Speak now — your words will show here"}
+                    </span>
                   </span>
                 ) : null}
                 {voice && !recording ? (
@@ -593,18 +867,29 @@ export function SnapyWidget() {
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={onComposerKeyDown}
-                placeholder="Describe the image you want"
+                placeholder={recording ? "Listening…" : "Describe an image"}
                 className="min-w-0 flex-1 bg-transparent py-2 text-[14px] text-[#1B1B1F] outline-none placeholder:text-[#8A8A96]"
                 disabled={busy}
               />
-              <button
-                type="submit"
-                className="snapy-btn grid h-9 w-9 place-items-center rounded-full text-[#3D6DFF] disabled:opacity-40"
-                aria-label="Send"
-                disabled={busy || !canSend}
-              >
-                <Icon name="send" size={20} />
-              </button>
+              {busy ? (
+                <button
+                  type="button"
+                  className="snapy-btn grid h-9 w-9 place-items-center rounded-full text-[#ba1a1a] hover:bg-white/70"
+                  aria-label={awaitingEdit ? "Pause and edit prompt" : "Pause generation"}
+                  onClick={stopGeneration}
+                >
+                  <Icon name="pause" size={20} />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="snapy-btn grid h-9 w-9 place-items-center rounded-full text-[#3D6DFF] disabled:opacity-40"
+                  aria-label="Send"
+                  disabled={!canSend}
+                >
+                  <Icon name="send" size={20} />
+                </button>
+              )}
             </div>
 
             <div className="mt-2 flex items-center gap-1">
@@ -636,37 +921,25 @@ export function SnapyWidget() {
         className={cn(
           "pointer-events-none fixed z-[121] h-16 w-16",
           "right-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] lg:right-6 lg:bottom-6",
-          open && !spinDir && !closing && "hidden lg:block",
+          open && !closing && "max-lg:hidden",
         )}
       >
-        {cloud ? (
-          <div
-            className={cn("snapy-cloud", cloud === "out" && "snapy-cloud-out")}
-            role="status"
-          >
-            <svg className="snapy-cloud-shape" viewBox="0 0 180 64" aria-hidden>
-              <rect x="2" y="2" width="160" height="44" rx="22" fill="#fff" />
-              <path fill="#fff" d="M132 40 L168 58 L118 44 Z" />
-            </svg>
-            <span className="snapy-cloud-text">lets create quickly</span>
-          </div>
-        ) : null}
         <button
           type="button"
-          className={cn(
-            "snapy-fab pointer-events-auto relative h-16 w-16",
-            !open && !spinDir && "snapy-fab-idle",
-            spinDir === "open" && "snapy-fab-spin",
-            spinDir === "close" && "snapy-fab-spin-reverse",
-          )}
+          className={cn("snapy-fab pointer-events-auto relative h-16 w-16", !open && !closing && "snapy-fab-idle")}
           aria-label={open ? "Close Snapy" : "Open Snapy"}
           aria-expanded={open}
           onClick={handleFabClick}
         >
           <span className="snapy-fab-glow" aria-hidden />
-          <span className="snapy-fab-bounce relative z-[1] grid h-full w-full place-items-center">
-            <span className="snapy-fab-disc grid h-16 w-16 place-items-center rounded-full bg-white shadow-[0_12px_28px_-10px_rgba(47,92,210,0.65)] ring-2 ring-[#9FC2FF]/70">
-              <Icon name="dashboard" filled className="text-secondary" size={30} />
+          <span className="relative z-[1] grid h-full w-full place-items-center">
+            <span className="snapy-fab-disc relative grid h-16 w-16 place-items-center rounded-full bg-white shadow-[0_12px_28px_-10px_rgba(47,92,210,0.65)] ring-2 ring-[#9FC2FF]/70">
+              <span className={cn("snapy-fab-mark", open && !closing ? "snapy-fab-mark-hide" : "snapy-fab-mark-show")}>
+                <Icon name="dashboard" filled className="text-secondary" size={30} />
+              </span>
+              <span className={cn("snapy-fab-mark", open && !closing ? "snapy-fab-mark-show" : "snapy-fab-mark-hide")}>
+                <Icon name="close" className="text-secondary" size={28} />
+              </span>
             </span>
           </span>
         </button>

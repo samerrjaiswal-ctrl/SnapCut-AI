@@ -134,7 +134,7 @@ function qrImageFromTotp(totp: { qr_code: string; uri: string }) {
   return totp.qr_code;
 }
 
-async function unenrollUnverifiedTotp() {
+export async function clearUnverifiedTotp() {
   const listed = await supabase.auth.mfa.listFactors();
   if (listed.error) throw listed.error;
   const pending = (listed.data.all ?? []).filter(
@@ -146,7 +146,7 @@ async function unenrollUnverifiedTotp() {
 }
 
 export async function enrollTotp(friendlyName = "SnapCut AI") {
-  await unenrollUnverifiedTotp();
+  await clearUnverifiedTotp();
   const { data, error } = await supabase.auth.mfa.enroll({
     factorType: "totp",
     friendlyName: `${friendlyName} ${Date.now().toString(36)}`,

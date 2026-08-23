@@ -39,10 +39,10 @@ function NotFoundComponent() {
           temporarily unavailable.
         </p>
         <Link
-          to="/dashboard"
+          to="/"
           className="inline-flex items-center justify-center gap-2 bg-primary-container text-on-primary h-12 px-8 rounded-lg font-label-md text-label-md hover:bg-on-primary-fixed-variant btn-glow"
         >
-          Back to Dashboard
+          Go home
         </Link>
       </main>
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20 flex justify-center items-center">
