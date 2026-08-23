@@ -25,7 +25,9 @@ export function Sidebar({ activePath }: SidebarProps) {
     <nav className="hidden lg:flex flex-col p-6 gap-2 bg-primary-container text-on-primary-fixed fixed left-0 top-0 h-full w-sidebar-width border-r border-outline-variant z-50 overflow-hidden">
       <div className="flex flex-col gap-1 mb-8 pl-4 pt-2">
         <div className="flex items-center gap-3">
-          <Icon name="dashboard" filled className="text-secondary" />
+          <div className="w-10 h-10 rounded-2xl bg-on-primary/10 flex items-center justify-center shrink-0">
+            <Icon name="dashboard" filled className="text-secondary" size={22} />
+          </div>
           <span className="font-headline-md text-headline-md font-black text-on-primary">
             SnapCut AI
           </span>

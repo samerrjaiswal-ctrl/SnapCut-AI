@@ -60,7 +60,7 @@ function useFontsReady() {
 }
 
 function LandingPage() {
-  const { session, mfaPending } = useAuth();
+  const { session, ready, mfaPending } = useAuth();
   const signedIn = Boolean(session) && !mfaPending;
   const fontsReady = useFontsReady();
 
@@ -99,7 +99,9 @@ function LandingPage() {
                 fontsReady ? "animate-scale-in delay-5" : "opacity-0"
               }`}
             >
-              {signedIn ? (
+              {!ready ? (
+                <span className="inline-flex h-12 w-44 rounded-lg bg-surface-variant/70" aria-hidden />
+              ) : signedIn ? (
                 <Link
                   to="/dashboard"
                   viewTransition

@@ -16,8 +16,8 @@ export const Route = createFileRoute("/pricing")({
 
 function PricingPage() {
   const [yearly, setYearly] = useState(false);
-  const { session, mfaPending } = useAuth();
-  const signedIn = Boolean(session) && !mfaPending;
+  const { session, ready, mfaPending } = useAuth();
+  const signedIn = ready && Boolean(session) && !mfaPending;
   const proPrice = yearly ? 15 : 19;
 
   return (

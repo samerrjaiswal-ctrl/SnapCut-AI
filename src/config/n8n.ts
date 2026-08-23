@@ -1,6 +1,10 @@
 /** n8n production webhook URLs — used only by the same-origin server proxy. */
 
 const FALLBACK_TEXT_REMOVER_URL = "https://sameerjaiswal.app.n8n.cloud/webhook/snapcut/remove-text";
+const FALLBACK_SNAPY_PROMPT_IMAGE_URL =
+  "https://sameerjaiswal.app.n8n.cloud/webhook/snapy-prompt-to-image";
+const FALLBACK_SNAPY_PROMPT_IMAGE_TEST_URL =
+  "https://sameerjaiswal.app.n8n.cloud/webhook-test/snapy-prompt-to-image";
 const FALLBACK_TEXT_EXTRACTOR_URLS = [
   "https://sameerjaiswal.app.n8n.cloud/webhook/Path: snapcut/extract-text",
   "https://sameerjaiswal.app.n8n.cloud/webhook/snapcut/extract-text",
@@ -35,6 +39,10 @@ export const n8nConfig = {
     import.meta.env.VITE_N8N_TEXT_REMOVER_URL,
     "VITE_N8N_TEXT_REMOVER_URL",
     FALLBACK_TEXT_REMOVER_URL,
+  ),
+  snapyPromptToImageUrl: uniqueUrls(
+    FALLBACK_SNAPY_PROMPT_IMAGE_URL,
+    import.meta.env.DEV ? FALLBACK_SNAPY_PROMPT_IMAGE_TEST_URL : undefined,
   ),
   textExtractorUrls: uniqueUrls(
     FALLBACK_TEXT_EXTRACTOR_URLS[0],

@@ -10,7 +10,7 @@ type MarketingHeaderProps = {
 
 export function MarketingHeader({ active }: MarketingHeaderProps) {
   const [open, setOpen] = useState(false);
-  const { session, mfaPending } = useAuth();
+  const { session, ready, mfaPending } = useAuth();
   const signedIn = Boolean(session) && !mfaPending;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const current =
@@ -20,8 +20,11 @@ export function MarketingHeader({ active }: MarketingHeaderProps) {
     <nav className="bg-surface text-primary sticky w-full top-0 border-b border-outline-variant z-50 relative flex justify-between items-center gap-3 px-container-margin-mobile md:px-container-margin-desktop min-h-16 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)]">
       <Link
         to="/"
-        className="font-headline-md text-headline-md font-bold text-on-surface tracking-tight truncate min-w-0"
+        className="flex items-center gap-3 font-headline-md text-headline-md font-bold text-on-surface tracking-tight truncate min-w-0"
       >
+        <div className="w-10 h-10 rounded-2xl bg-secondary/10 flex items-center justify-center shrink-0">
+          <Icon name="dashboard" filled className="text-secondary" size={22} />
+        </div>
         SnapCut AI
       </Link>
 
@@ -61,8 +64,10 @@ export function MarketingHeader({ active }: MarketingHeaderProps) {
         </Link>
       </div>
 
-      <div className="hidden md:flex items-center gap-4">
-        {signedIn ? (
+      <div className="hidden md:flex items-center gap-4 min-h-9 min-w-[9.5rem] justify-end">
+        {!ready ? (
+          <span className="inline-flex h-9 w-36 rounded-lg bg-surface-variant/70" aria-hidden />
+        ) : signedIn ? (
           <Link
             to="/dashboard"
             viewTransition
@@ -123,7 +128,7 @@ export function MarketingHeader({ active }: MarketingHeaderProps) {
           >
             Pricing
           </Link>
-          {signedIn ? (
+          {!ready ? null : signedIn ? (
             <Link
               to="/dashboard"
               viewTransition

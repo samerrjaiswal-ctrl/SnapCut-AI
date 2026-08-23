@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_N8N_TEXT_REMOVER_URL?: string;
   readonly VITE_N8N_TEXT_EXTRACTOR_URL?: string;
+  readonly VITE_N8N_SNAPY_PROMPT_TO_IMAGE_URL?: string;
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY?: string;
 }

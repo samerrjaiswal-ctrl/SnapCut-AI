@@ -23,6 +23,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ApiExtractTextRouteImport } from './routes/api/extract-text'
 import { Route as ApiRemoveTextRouteImport } from './routes/api/remove-text'
 import { Route as ApiResetPasswordRouteImport } from './routes/api/reset-password'
+import { Route as ApiSnapyEditRouteImport } from './routes/api/snapy-edit'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth/update-password'
 
@@ -96,6 +97,11 @@ const ApiResetPasswordRoute = ApiResetPasswordRouteImport.update({
   path: '/api/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSnapyEditRoute = ApiSnapyEditRouteImport.update({
+  id: '/api/snapy-edit',
+  path: '/api/snapy-edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
   '/api/reset-password': typeof ApiResetPasswordRoute
+  '/api/snapy-edit': typeof ApiSnapyEditRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
   '/api/reset-password': typeof ApiResetPasswordRoute
+  '/api/snapy-edit': typeof ApiSnapyEditRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
   '/api/reset-password': typeof ApiResetPasswordRoute
+  '/api/snapy-edit': typeof ApiSnapyEditRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/api/extract-text'
     | '/api/remove-text'
     | '/api/reset-password'
+    | '/api/snapy-edit'
     | '/auth/callback'
     | '/auth/update-password'
   fileRoutesByTo: FileRoutesByTo
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/api/extract-text'
     | '/api/remove-text'
     | '/api/reset-password'
+    | '/api/snapy-edit'
     | '/auth/callback'
     | '/auth/update-password'
   id:
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/api/extract-text'
     | '/api/remove-text'
     | '/api/reset-password'
+    | '/api/snapy-edit'
     | '/auth/callback'
     | '/auth/update-password'
   fileRoutesById: FileRoutesById
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   ApiExtractTextRoute: typeof ApiExtractTextRoute
   ApiRemoveTextRoute: typeof ApiRemoveTextRoute
   ApiResetPasswordRoute: typeof ApiResetPasswordRoute
+  ApiSnapyEditRoute: typeof ApiSnapyEditRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthUpdatePasswordRoute: typeof AuthUpdatePasswordRoute
 }
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/snapy-edit': {
+      id: '/api/snapy-edit'
+      path: '/api/snapy-edit'
+      fullPath: '/api/snapy-edit'
+      preLoaderRoute: typeof ApiSnapyEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -370,6 +390,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiExtractTextRoute: ApiExtractTextRoute,
   ApiRemoveTextRoute: ApiRemoveTextRoute,
   ApiResetPasswordRoute: ApiResetPasswordRoute,
+  ApiSnapyEditRoute: ApiSnapyEditRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthUpdatePasswordRoute: AuthUpdatePasswordRoute,
 }

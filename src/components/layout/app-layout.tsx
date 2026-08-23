@@ -6,6 +6,7 @@ import { Icon } from "@/components/snapcut/icon";
 import { RequireAuth } from "@/components/auth/auth-guards";
 import { useAuth } from "@/components/providers/auth-provider";
 import { cn } from "@/lib/utils";
+import { SnapyWidget } from "@/components/snapy/snapy-widget";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -42,7 +43,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       >
         <header className="lg:hidden sticky top-0 z-40 bg-surface border-b border-outline-variant flex justify-between items-center w-full min-w-0 px-container-margin-mobile h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <Icon name="dashboard" filled className="text-secondary shrink-0" />
+            <div className="w-10 h-10 rounded-2xl bg-secondary/10 flex items-center justify-center shrink-0">
+              <Icon name="dashboard" filled className="text-secondary" size={22} />
+            </div>
             <span className="font-headline-md text-headline-md font-bold text-on-surface truncate">
               SnapCut AI
             </span>
@@ -90,6 +93,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </main>
 
         <MobileNav activePath={pathname} />
+        <SnapyWidget />
       </div>
     </RequireAuth>
   );

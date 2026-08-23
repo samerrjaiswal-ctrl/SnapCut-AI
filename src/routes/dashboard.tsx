@@ -80,9 +80,9 @@ function DashboardPage() {
       </div>
 
       <div className="lg:hidden mb-6">
-        <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-1">
-          Welcome back.
-        </h1>
+        <p className="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-1">
+          Welcome back, {name}.
+        </p>
         <p className="font-body-md text-body-md text-on-surface-variant">
           Ready to create?
         </p>
@@ -204,7 +204,7 @@ function DashboardPage() {
         type="button"
         aria-label="New Project"
         onClick={() => setProjectOpen(true)}
-        className="lg:hidden fixed right-4 w-14 h-14 bg-secondary text-on-secondary rounded-full shadow-lg flex items-center justify-center hover:bg-secondary-container z-40 bottom-[calc(6rem+env(safe-area-inset-bottom))]"
+        className="lg:hidden fixed right-[5.5rem] w-14 h-14 bg-secondary text-on-secondary rounded-full shadow-lg flex items-center justify-center hover:bg-secondary-container z-40 bottom-[calc(6rem+env(safe-area-inset-bottom))]"
       >
         <Icon name="add" size={28} />
       </button>
