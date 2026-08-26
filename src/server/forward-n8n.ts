@@ -194,3 +194,165 @@ export async function forwardSnapyEditToN8n(
 
   return lastResponse ?? Response.json({ success: false }, { status: 502 });
 }
+
+export async function forwardPdfToN8n(
+  request: Request,
+  webhookUrl: string | string[],
+): Promise<Response> {
+  const urls = webhookCandidates(webhookUrl);
+  if (!urls.length) {
+    return Response.json({ success: false, error: "No webhook URL configured" }, { status: 503 });
+  }
+
+  let incoming: FormData;
+  try {
+    incoming = await request.formData();
+  } catch {
+    return Response.json({ success: false, error: "Invalid form data" }, { status: 400 });
+  }
+
+  const file = incoming.get("file") ?? incoming.get("data");
+  if (!(file instanceof Blob) || file.size <= 0) {
+    return Response.json({ success: false, error: "No PDF file provided" }, { status: 400 });
+  }
+
+  const filename = file instanceof File && file.name ? file.name : "document.pdf";
+  const fileBuffer = await file.arrayBuffer();
+  let lastResponse: Response | null = null;
+
+  for (const url of urls) {
+    const outbound = new FormData();
+    const blob = new Blob([fileBuffer], { type: file.type || "application/pdf" });
+    outbound.append("file", blob, filename);
+    outbound.append("data", blob, filename);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      if (import.meta.env.DEV) {
+        console.info(`[SnapCut] Forwarding PDF (${filename}, ${file.size} bytes) to n8n: ${url}`);
+      }
+
+      const upstream = await fetch(encodeURI(url), {
+        method: "POST",
+        body: outbound,
+        signal: controller.signal,
+      });
+
+      const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
+      const body = await upstream.arrayBuffer();
+
+      if (import.meta.env.DEV) {
+        console.info(`[SnapCut] n8n response: status=${upstream.status}, content-type=${contentType}, size=${body.byteLength}`);
+      }
+
+      lastResponse = new Response(body, {
+        status: upstream.status,
+        statusText: upstream.statusText,
+        headers: { "content-type": contentType },
+      });
+
+      if (upstream.ok || ![404, 405, 502, 503, 504].includes(upstream.status)) {
+        return lastResponse;
+      }
+    } catch (error) {
+      if (isAbortError(error)) {
+        return Response.json({ success: false, error: "Request timed out" }, { status: 504 });
+      }
+      console.error("[SnapCut] n8n PDF forward failed:", error);
+      lastResponse = Response.json({ success: false, error: "Upstream error" }, { status: 502 });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  return lastResponse ?? Response.json({ success: false, error: "Conversion failed" }, { status: 502 });
+}
+
+export async function forwardPdfMergeToN8n(
+  request: Request,
+  webhookUrl: string | string[],
+): Promise<Response> {
+  const urls = webhookCandidates(webhookUrl);
+  if (!urls.length) {
+    return Response.json({ success: false, error: "No webhook URL configured" }, { status: 503 });
+  }
+
+  let incoming: FormData;
+  try {
+    incoming = await request.formData();
+  } catch {
+    return Response.json({ success: false, error: "Invalid form data" }, { status: 400 });
+  }
+
+  const allFiles: Array<{ blob: Blob; name: string }> = [];
+
+  for (const [key, value] of incoming.entries()) {
+    if (value instanceof Blob && value.size > 0) {
+      const filename = value instanceof File && value.name ? value.name : `${key}.pdf`;
+      allFiles.push({ blob: value, name: filename });
+    }
+  }
+
+  if (allFiles.length === 0) {
+    return Response.json({ success: false, error: "No PDF files provided" }, { status: 400 });
+  }
+
+  let lastResponse: Response | null = null;
+
+  for (const url of urls) {
+    const outbound = new FormData();
+
+    allFiles.forEach((fileItem, idx) => {
+      outbound.append("files", fileItem.blob, fileItem.name);
+      outbound.append("data", fileItem.blob, fileItem.name);
+      outbound.append(`file_${idx + 1}`, fileItem.blob, fileItem.name);
+      outbound.append(`file${idx + 1}`, fileItem.blob, fileItem.name);
+    });
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      if (import.meta.env.DEV) {
+        console.info(`[SnapCut] Forwarding ${allFiles.length} PDFs to n8n merge webhook: ${url}`);
+      }
+
+      const upstream = await fetch(encodeURI(url), {
+        method: "POST",
+        body: outbound,
+        signal: controller.signal,
+      });
+
+      const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
+      const body = await upstream.arrayBuffer();
+
+      if (import.meta.env.DEV) {
+        console.info(`[SnapCut] n8n merge response: status=${upstream.status}, content-type=${contentType}, size=${body.byteLength}`);
+      }
+
+      lastResponse = new Response(body, {
+        status: upstream.status,
+        statusText: upstream.statusText,
+        headers: { "content-type": contentType },
+      });
+
+      if (upstream.ok || ![404, 405, 502, 503, 504].includes(upstream.status)) {
+        return lastResponse;
+      }
+    } catch (error) {
+      if (isAbortError(error)) {
+        return Response.json({ success: false, error: "Request timed out" }, { status: 504 });
+      }
+      console.error("[SnapCut] n8n PDF merge forward failed:", error);
+      lastResponse = Response.json({ success: false, error: "Upstream error" }, { status: 502 });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  return lastResponse ?? Response.json({ success: false, error: "Merge failed" }, { status: 502 });
+}
+
+

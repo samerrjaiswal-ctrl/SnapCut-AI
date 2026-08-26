@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/remove-text", label: "Remove Text", icon: "ink_eraser" },
   { to: "/image-to-text", label: "Image to Text", icon: "article" },
   { to: "/collage-maker", label: "Collage Maker", icon: "dashboard_customize" },
+  { to: "/pdf-to-word", label: "PDF Operations", icon: "picture_as_pdf" },
   { to: "/history", label: "History", icon: "history" },
   { to: "/settings", label: "Settings", icon: "settings" },
 ] as const;
@@ -39,7 +40,10 @@ export function Sidebar({ activePath }: SidebarProps) {
 
       <div className="flex flex-col gap-2 flex-grow overflow-y-auto sidebar-scroll pr-2">
         {NAV_ITEMS.map((item, index) => {
-          const active = activePath === item.to;
+          const active =
+            activePath === item.to ||
+            (item.to === "/pdf-to-word" &&
+              (activePath === "/pdf-to-pptx" || activePath === "/pdf-merger"));
           return (
             <Link
               key={item.to}
@@ -47,7 +51,7 @@ export function Sidebar({ activePath }: SidebarProps) {
               preload="intent"
               className={cn(
                 "flex items-center gap-3 rounded-lg px-4 py-2 font-label-md text-label-md border-l-4",
-                index === 4 && "mt-4",
+                index === 5 && "mt-4",
                 active
                   ? "bg-secondary-container text-on-secondary-container border-secondary shadow-sm"
                   : "text-on-primary-container border-transparent hover:bg-on-primary-fixed-variant",

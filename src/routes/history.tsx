@@ -22,6 +22,7 @@ const TABS: { id: "all" | HistoryCategory; label: string }[] = [
   { id: "image-to-text", label: "Image to Text" },
   { id: "collage", label: "Collages" },
   { id: "snapy", label: "Snapy" },
+  { id: "pdf-operations", label: "PDF Operations" },
 ];
 
 function HistoryPage() {

@@ -34,6 +34,16 @@ function uniqueUrls(...urls: Array<string | undefined>) {
   return next;
 }
 
+const FALLBACK_PDF_TO_WORD_URL = "https://sameerjaiswal.app.n8n.cloud/webhook/pdf-to-word";
+const FALLBACK_PDF_TO_WORD_TEST_URL =
+  "https://sameerjaiswal.app.n8n.cloud/webhook-test/pdf-to-word";
+const FALLBACK_PDF_TO_PPTX_URL = "https://sameerjaiswal.app.n8n.cloud/webhook/pdf-to-pptx";
+const FALLBACK_PDF_TO_PPTX_TEST_URL =
+  "https://sameerjaiswal.app.n8n.cloud/webhook-test/pdf-to-pptx";
+const FALLBACK_PDF_MERGE_URL = "https://sameerjaiswal.app.n8n.cloud/webhook/pdf-merge";
+const FALLBACK_PDF_MERGE_TEST_URL =
+  "https://sameerjaiswal.app.n8n.cloud/webhook-test/pdf-merge";
+
 export const n8nConfig = {
   textRemoverUrl: readWebhookUrl(
     import.meta.env.VITE_N8N_TEXT_REMOVER_URL,
@@ -52,5 +62,32 @@ export const n8nConfig = {
       FALLBACK_TEXT_EXTRACTOR_URLS[0],
     ),
     FALLBACK_TEXT_EXTRACTOR_URLS[1],
+  ),
+  pdfToWordUrls: uniqueUrls(
+    readWebhookUrl(
+      import.meta.env.VITE_N8N_PDF_TO_WORD_URL,
+      "VITE_N8N_PDF_TO_WORD_URL",
+      FALLBACK_PDF_TO_WORD_URL,
+    ),
+    FALLBACK_PDF_TO_WORD_URL,
+    import.meta.env.DEV ? FALLBACK_PDF_TO_WORD_TEST_URL : undefined,
+  ),
+  pdfToPptxUrls: uniqueUrls(
+    readWebhookUrl(
+      import.meta.env.VITE_N8N_PDF_TO_PPTX_URL,
+      "VITE_N8N_PDF_TO_PPTX_URL",
+      FALLBACK_PDF_TO_PPTX_URL,
+    ),
+    FALLBACK_PDF_TO_PPTX_URL,
+    import.meta.env.DEV ? FALLBACK_PDF_TO_PPTX_TEST_URL : undefined,
+  ),
+  pdfMergeUrls: uniqueUrls(
+    readWebhookUrl(
+      import.meta.env.VITE_N8N_PDF_MERGE_URL,
+      "VITE_N8N_PDF_MERGE_URL",
+      FALLBACK_PDF_MERGE_URL,
+    ),
+    FALLBACK_PDF_MERGE_URL,
+    import.meta.env.DEV ? FALLBACK_PDF_MERGE_TEST_URL : undefined,
   ),
 } as const;

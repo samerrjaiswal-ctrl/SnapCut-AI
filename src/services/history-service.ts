@@ -272,6 +272,7 @@ export async function listHistory(
   if (category === "image-to-text") query = query.eq("operation_type", "extract_text");
   if (category === "collage") query = query.eq("operation_type", "collage");
   if (category === "snapy") query = query.eq("operation_type", "snapy");
+  if (category === "pdf-operations") query = query.in("operation_type", ["pdf_to_word", "pdf_to_pptx"]);
 
   const { data, error } = await query;
   if (error) throw error;

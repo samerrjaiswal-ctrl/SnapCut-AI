@@ -188,6 +188,24 @@ function DashboardPage() {
           title="Collage Maker"
           description="Generate professional, seamless collages with intelligent auto-layout and smart framing algorithms."
         />
+        <ToolCard
+          to="/pdf-to-word"
+          icon="description"
+          title="PDF to Word"
+          description="Convert your PDF documents into fully editable Word files instantly."
+        />
+        <ToolCard
+          to="/pdf-to-pptx"
+          icon="slideshow"
+          title="PDF to PPTX"
+          description="Transform your PDFs into editable PowerPoint presentations effortlessly."
+        />
+        <ToolCard
+          to="/pdf-merger"
+          icon="picture_as_pdf"
+          title="PDF Merger"
+          description="Combine multiple PDF documents into a single organized file seamlessly."
+        />
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -17,6 +17,9 @@ const MAIN_BY_PATH: Record<string, string> = {
   "/history": "p-container-margin-mobile md:p-container-margin-desktop",
   "/remove-text": "flex flex-col min-h-screen",
   "/image-to-text": "flex flex-col min-h-screen",
+  "/pdf-to-word": "flex flex-col min-h-screen",
+  "/pdf-to-pptx": "flex flex-col min-h-screen",
+  "/pdf-merger": "flex flex-col min-h-screen",
 };
 
 export const APP_SHELL_PATHS = new Set([
@@ -24,6 +27,9 @@ export const APP_SHELL_PATHS = new Set([
   "/remove-text",
   "/image-to-text",
   "/collage-maker",
+  "/pdf-to-word",
+  "/pdf-to-pptx",
+  "/pdf-merger",
   "/history",
   "/settings",
 ]);

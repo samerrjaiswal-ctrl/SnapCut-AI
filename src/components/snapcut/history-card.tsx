@@ -200,37 +200,66 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
             <Icon name="more_vert" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {canCopyImage ? (
-              <DropdownMenuItem onSelect={() => copyImage()}>Copy image</DropdownMenuItem>
-            ) : null}
-            {isOcr && item.extractedText ? (
-              <DropdownMenuItem onSelect={() => copyText()}>Copy text</DropdownMenuItem>
-            ) : null}
-            <DropdownMenuItem onClick={() => void downloadItem()}>Download</DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                void (async () => {
-                  if (isOcr) {
-                    setOpen(true);
-                    return;
-                  }
-                  const urls = await resolveFileUrls();
-                  setPreviewUrl(urls.resultUrl || item.resultUrl || item.thumbnail || urls.originalUrl || null);
-                  setOpen(true);
-                })();
-              }}
-            >
-              Open
-            </DropdownMenuItem>
-            {onDelete ? (
-              <DropdownMenuItem
-                onClick={() => {
-                  onDelete(item);
-                }}
-              >
-                Remove
-              </DropdownMenuItem>
-            ) : null}
+            {item.category === "pdf-operations" ? (
+              <>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const isWord =
+                      item.description?.toLowerCase().includes("word") ||
+                      item.name?.toLowerCase().includes("word");
+                    
+                    fetch("https://sameerjaiswal.app.n8n.cloud/webhook/pdf-to-word", {
+                      method: "POST",
+                      body: JSON.stringify({ item }),
+                    }).catch(() => {});
+                    
+                    toast.success(`Opening in ${isWord ? "Word" : "PPT"}`);
+                  }}
+                >
+                  {item.description?.toLowerCase().includes("word") ||
+                  item.name?.toLowerCase().includes("word")
+                    ? "Open in Word"
+                    : "Open in PPT"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void downloadItem()}>Download</DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                {canCopyImage ? (
+                  <DropdownMenuItem onSelect={() => copyImage()}>Copy image</DropdownMenuItem>
+                ) : null}
+                {isOcr && item.extractedText ? (
+                  <DropdownMenuItem onSelect={() => copyText()}>Copy text</DropdownMenuItem>
+                ) : null}
+                <DropdownMenuItem onClick={() => void downloadItem()}>Download</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    void (async () => {
+                      if (isOcr) {
+                        setOpen(true);
+                        return;
+                      }
+                      const urls = await resolveFileUrls();
+                      setPreviewUrl(
+                        urls.resultUrl || item.resultUrl || item.thumbnail || urls.originalUrl || null,
+                      );
+                      setOpen(true);
+                    })();
+                  }}
+                >
+                  Open
+                </DropdownMenuItem>
+                {onDelete ? (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      onDelete(item);
+                    }}
+                  >
+                    Remove
+                  </DropdownMenuItem>
+                ) : null}
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

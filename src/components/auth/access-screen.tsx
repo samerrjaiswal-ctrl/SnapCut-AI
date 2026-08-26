@@ -42,9 +42,7 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
   const { login, signup } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    setTab(defaultTab);
-  }, [defaultTab]);
+
 
   useEffect(() => {
     const savedNotice = sessionStorage.getItem("snapcut-auth-notice");
@@ -134,7 +132,7 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
         : "Account created. Log in to continue.";
       sessionStorage.setItem("snapcut-auth-notice", nextNotice);
       if (result.needsConfirmation) sessionStorage.setItem("snapcut-auth-pending-email", signupEmail);
-      await navigate({ to: "/login", replace: true, viewTransition: true });
+      switchTab("login");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to create account. Please try again.";
       const alreadyExists =
@@ -171,7 +169,8 @@ function AccessForm({ defaultTab }: AccessScreenProps) {
     setError(null);
     setNotice(null);
     if (next === "signup") setTakenSignupEmail(null);
-    void navigate({ to: next === "login" ? "/login" : "/signup", replace: true, viewTransition: true });
+    setTab(next);
+    window.history.pushState({}, "", next === "login" ? "/login" : "/signup");
   }
 
   const fieldClass =

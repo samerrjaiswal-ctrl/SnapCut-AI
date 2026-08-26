@@ -16,11 +16,18 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ImageToTextRouteImport } from './routes/image-to-text'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PdfMergerRouteImport } from './routes/pdf-merger'
+import { Route as PdfToPptxRouteImport } from './routes/pdf-to-pptx'
+import { Route as PdfToWordRouteImport } from './routes/pdf-to-word'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as RemoveTextRouteImport } from './routes/remove-text'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ApiExtractTextRouteImport } from './routes/api/extract-text'
+import { Route as ApiMergePdfRouteImport } from './routes/api/merge-pdf'
+import { Route as ApiPdfMergeRouteImport } from './routes/api/pdf-merge'
+import { Route as ApiPdfToPptxRouteImport } from './routes/api/pdf-to-pptx'
+import { Route as ApiPdfToWordRouteImport } from './routes/api/pdf-to-word'
 import { Route as ApiRemoveTextRouteImport } from './routes/api/remove-text'
 import { Route as ApiResetPasswordRouteImport } from './routes/api/reset-password'
 import { Route as ApiSnapyAskRouteImport } from './routes/api/snapy-ask'
@@ -63,6 +70,21 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PdfMergerRoute = PdfMergerRouteImport.update({
+  id: '/pdf-merger',
+  path: '/pdf-merger',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfToPptxRoute = PdfToPptxRouteImport.update({
+  id: '/pdf-to-pptx',
+  path: '/pdf-to-pptx',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfToWordRoute = PdfToWordRouteImport.update({
+  id: '/pdf-to-word',
+  path: '/pdf-to-word',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -86,6 +108,26 @@ const SignupRoute = SignupRouteImport.update({
 const ApiExtractTextRoute = ApiExtractTextRouteImport.update({
   id: '/api/extract-text',
   path: '/api/extract-text',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMergePdfRoute = ApiMergePdfRouteImport.update({
+  id: '/api/merge-pdf',
+  path: '/api/merge-pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPdfMergeRoute = ApiPdfMergeRouteImport.update({
+  id: '/api/pdf-merge',
+  path: '/api/pdf-merge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPdfToPptxRoute = ApiPdfToPptxRouteImport.update({
+  id: '/api/pdf-to-pptx',
+  path: '/api/pdf-to-pptx',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPdfToWordRoute = ApiPdfToWordRouteImport.update({
+  id: '/api/pdf-to-word',
+  path: '/api/pdf-to-word',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRemoveTextRoute = ApiRemoveTextRouteImport.update({
@@ -127,11 +169,18 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/image-to-text': typeof ImageToTextRoute
   '/login': typeof LoginRoute
+  '/pdf-merger': typeof PdfMergerRoute
+  '/pdf-to-pptx': typeof PdfToPptxRoute
+  '/pdf-to-word': typeof PdfToWordRoute
   '/pricing': typeof PricingRoute
   '/remove-text': typeof RemoveTextRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/api/extract-text': typeof ApiExtractTextRoute
+  '/api/merge-pdf': typeof ApiMergePdfRoute
+  '/api/pdf-merge': typeof ApiPdfMergeRoute
+  '/api/pdf-to-pptx': typeof ApiPdfToPptxRoute
+  '/api/pdf-to-word': typeof ApiPdfToWordRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
   '/api/reset-password': typeof ApiResetPasswordRoute
   '/api/snapy-ask': typeof ApiSnapyAskRoute
@@ -147,11 +196,18 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/image-to-text': typeof ImageToTextRoute
   '/login': typeof LoginRoute
+  '/pdf-merger': typeof PdfMergerRoute
+  '/pdf-to-pptx': typeof PdfToPptxRoute
+  '/pdf-to-word': typeof PdfToWordRoute
   '/pricing': typeof PricingRoute
   '/remove-text': typeof RemoveTextRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/api/extract-text': typeof ApiExtractTextRoute
+  '/api/merge-pdf': typeof ApiMergePdfRoute
+  '/api/pdf-merge': typeof ApiPdfMergeRoute
+  '/api/pdf-to-pptx': typeof ApiPdfToPptxRoute
+  '/api/pdf-to-word': typeof ApiPdfToWordRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
   '/api/reset-password': typeof ApiResetPasswordRoute
   '/api/snapy-ask': typeof ApiSnapyAskRoute
@@ -168,11 +224,18 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/image-to-text': typeof ImageToTextRoute
   '/login': typeof LoginRoute
+  '/pdf-merger': typeof PdfMergerRoute
+  '/pdf-to-pptx': typeof PdfToPptxRoute
+  '/pdf-to-word': typeof PdfToWordRoute
   '/pricing': typeof PricingRoute
   '/remove-text': typeof RemoveTextRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/api/extract-text': typeof ApiExtractTextRoute
+  '/api/merge-pdf': typeof ApiMergePdfRoute
+  '/api/pdf-merge': typeof ApiPdfMergeRoute
+  '/api/pdf-to-pptx': typeof ApiPdfToPptxRoute
+  '/api/pdf-to-word': typeof ApiPdfToWordRoute
   '/api/remove-text': typeof ApiRemoveTextRoute
   '/api/reset-password': typeof ApiResetPasswordRoute
   '/api/snapy-ask': typeof ApiSnapyAskRoute
@@ -190,11 +253,18 @@ export interface FileRouteTypes {
     | '/history'
     | '/image-to-text'
     | '/login'
+    | '/pdf-merger'
+    | '/pdf-to-pptx'
+    | '/pdf-to-word'
     | '/pricing'
     | '/remove-text'
     | '/settings'
     | '/signup'
     | '/api/extract-text'
+    | '/api/merge-pdf'
+    | '/api/pdf-merge'
+    | '/api/pdf-to-pptx'
+    | '/api/pdf-to-word'
     | '/api/remove-text'
     | '/api/reset-password'
     | '/api/snapy-ask'
@@ -210,11 +280,18 @@ export interface FileRouteTypes {
     | '/history'
     | '/image-to-text'
     | '/login'
+    | '/pdf-merger'
+    | '/pdf-to-pptx'
+    | '/pdf-to-word'
     | '/pricing'
     | '/remove-text'
     | '/settings'
     | '/signup'
     | '/api/extract-text'
+    | '/api/merge-pdf'
+    | '/api/pdf-merge'
+    | '/api/pdf-to-pptx'
+    | '/api/pdf-to-word'
     | '/api/remove-text'
     | '/api/reset-password'
     | '/api/snapy-ask'
@@ -230,11 +307,18 @@ export interface FileRouteTypes {
     | '/history'
     | '/image-to-text'
     | '/login'
+    | '/pdf-merger'
+    | '/pdf-to-pptx'
+    | '/pdf-to-word'
     | '/pricing'
     | '/remove-text'
     | '/settings'
     | '/signup'
     | '/api/extract-text'
+    | '/api/merge-pdf'
+    | '/api/pdf-merge'
+    | '/api/pdf-to-pptx'
+    | '/api/pdf-to-word'
     | '/api/remove-text'
     | '/api/reset-password'
     | '/api/snapy-ask'
@@ -251,11 +335,18 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   ImageToTextRoute: typeof ImageToTextRoute
   LoginRoute: typeof LoginRoute
+  PdfMergerRoute: typeof PdfMergerRoute
+  PdfToPptxRoute: typeof PdfToPptxRoute
+  PdfToWordRoute: typeof PdfToWordRoute
   PricingRoute: typeof PricingRoute
   RemoveTextRoute: typeof RemoveTextRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   ApiExtractTextRoute: typeof ApiExtractTextRoute
+  ApiMergePdfRoute: typeof ApiMergePdfRoute
+  ApiPdfMergeRoute: typeof ApiPdfMergeRoute
+  ApiPdfToPptxRoute: typeof ApiPdfToPptxRoute
+  ApiPdfToWordRoute: typeof ApiPdfToWordRoute
   ApiRemoveTextRoute: typeof ApiRemoveTextRoute
   ApiResetPasswordRoute: typeof ApiResetPasswordRoute
   ApiSnapyAskRoute: typeof ApiSnapyAskRoute
@@ -315,6 +406,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pdf-merger': {
+      id: '/pdf-merger'
+      path: '/pdf-merger'
+      fullPath: '/pdf-merger'
+      preLoaderRoute: typeof PdfMergerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf-to-pptx': {
+      id: '/pdf-to-pptx'
+      path: '/pdf-to-pptx'
+      fullPath: '/pdf-to-pptx'
+      preLoaderRoute: typeof PdfToPptxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf-to-word': {
+      id: '/pdf-to-word'
+      path: '/pdf-to-word'
+      fullPath: '/pdf-to-word'
+      preLoaderRoute: typeof PdfToWordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -348,6 +460,34 @@ declare module '@tanstack/react-router' {
       path: '/api/extract-text'
       fullPath: '/api/extract-text'
       preLoaderRoute: typeof ApiExtractTextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/merge-pdf': {
+      id: '/api/merge-pdf'
+      path: '/api/merge-pdf'
+      fullPath: '/api/merge-pdf'
+      preLoaderRoute: typeof ApiMergePdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/pdf-merge': {
+      id: '/api/pdf-merge'
+      path: '/api/pdf-merge'
+      fullPath: '/api/pdf-merge'
+      preLoaderRoute: typeof ApiPdfMergeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/pdf-to-pptx': {
+      id: '/api/pdf-to-pptx'
+      path: '/api/pdf-to-pptx'
+      fullPath: '/api/pdf-to-pptx'
+      preLoaderRoute: typeof ApiPdfToPptxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/pdf-to-word': {
+      id: '/api/pdf-to-word'
+      path: '/api/pdf-to-word'
+      fullPath: '/api/pdf-to-word'
+      preLoaderRoute: typeof ApiPdfToWordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/remove-text': {
@@ -403,11 +543,18 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   ImageToTextRoute: ImageToTextRoute,
   LoginRoute: LoginRoute,
+  PdfMergerRoute: PdfMergerRoute,
+  PdfToPptxRoute: PdfToPptxRoute,
+  PdfToWordRoute: PdfToWordRoute,
   PricingRoute: PricingRoute,
   RemoveTextRoute: RemoveTextRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   ApiExtractTextRoute: ApiExtractTextRoute,
+  ApiMergePdfRoute: ApiMergePdfRoute,
+  ApiPdfMergeRoute: ApiPdfMergeRoute,
+  ApiPdfToPptxRoute: ApiPdfToPptxRoute,
+  ApiPdfToWordRoute: ApiPdfToWordRoute,
   ApiRemoveTextRoute: ApiRemoveTextRoute,
   ApiResetPasswordRoute: ApiResetPasswordRoute,
   ApiSnapyAskRoute: ApiSnapyAskRoute,
