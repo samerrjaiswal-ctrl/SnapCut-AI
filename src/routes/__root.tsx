@@ -13,7 +13,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/components/providers/auth-provider";
-import { APP_SHELL_PATHS, AppLayout } from "@/components/layout/app-layout";
+import { AppLayout } from "@/components/layout/app-layout";
+import { isAppShellPath } from "@/data/tools";
 import { Toaster } from "@/components/ui/sonner";
 import { Icon } from "@/components/snapcut/icon";
 import { SmoothText } from "@/components/snapcut/smooth-text";
@@ -166,7 +167,7 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const inApp = APP_SHELL_PATHS.has(pathname);
+  const inApp = isAppShellPath(pathname);
 
   return (
     <QueryClientProvider client={queryClient}>

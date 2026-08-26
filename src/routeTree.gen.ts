@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as CollageMakerRouteImport } from './routes/collage-maker'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as FilePreviewRouteImport } from './routes/file-preview'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ImageToTextRouteImport } from './routes/image-to-text'
 import { Route as LoginRouteImport } from './routes/login'
@@ -23,6 +24,11 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as RemoveTextRouteImport } from './routes/remove-text'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AiProductivityIndexRouteImport } from './routes/ai-productivity/index'
+import { Route as AiProductivityResumeAnalyzerRouteImport } from './routes/ai-productivity/resume-analyzer'
+import { Route as AiProductivitySpeechToTextRouteImport } from './routes/ai-productivity/speech-to-text'
+import { Route as AiProductivityTextRewriterRouteImport } from './routes/ai-productivity/text-rewriter'
+import { Route as AiProductivityTranslatorRouteImport } from './routes/ai-productivity/translator'
 import { Route as ApiExtractTextRouteImport } from './routes/api/extract-text'
 import { Route as ApiMergePdfRouteImport } from './routes/api/merge-pdf'
 import { Route as ApiPdfMergeRouteImport } from './routes/api/pdf-merge'
@@ -34,6 +40,22 @@ import { Route as ApiSnapyAskRouteImport } from './routes/api/snapy-ask'
 import { Route as ApiSnapyEditRouteImport } from './routes/api/snapy-edit'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth/update-password'
+import { Route as CreativeAiIndexRouteImport } from './routes/creative-ai/index'
+import { Route as CreativeAiPosterGeneratorRouteImport } from './routes/creative-ai/poster-generator'
+import { Route as CreativeAiSocialPostGeneratorRouteImport } from './routes/creative-ai/social-post-generator'
+import { Route as CreativeAiThumbnailGeneratorRouteImport } from './routes/creative-ai/thumbnail-generator'
+import { Route as ImageAiIndexRouteImport } from './routes/image-ai/index'
+import { Route as ImageAiAltTextGeneratorRouteImport } from './routes/image-ai/alt-text-generator'
+import { Route as ImageAiBackgroundRemoverRouteImport } from './routes/image-ai/background-remover'
+import { Route as ImageAiCaptionGeneratorRouteImport } from './routes/image-ai/caption-generator'
+import { Route as ImageAiImageAnalyzerRouteImport } from './routes/image-ai/image-analyzer'
+import { Route as ImageAiImageEnhancerRouteImport } from './routes/image-ai/image-enhancer'
+import { Route as PdfOperationsIndexRouteImport } from './routes/pdf-operations/index'
+import { Route as PdfOperationsInvoiceExtractorRouteImport } from './routes/pdf-operations/invoice-extractor'
+import { Route as PdfOperationsManageRouteImport } from './routes/pdf-operations/manage'
+import { Route as PdfOperationsQaRouteImport } from './routes/pdf-operations/qa'
+import { Route as PdfOperationsStudyNotesRouteImport } from './routes/pdf-operations/study-notes'
+import { Route as PdfOperationsSummarizerRouteImport } from './routes/pdf-operations/summarizer'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -53,6 +75,11 @@ const CollageMakerRoute = CollageMakerRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FilePreviewRoute = FilePreviewRouteImport.update({
+  id: '/file-preview',
+  path: '/file-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -105,6 +132,35 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiProductivityIndexRoute = AiProductivityIndexRouteImport.update({
+  id: '/ai-productivity/',
+  path: '/ai-productivity/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiProductivityResumeAnalyzerRoute =
+  AiProductivityResumeAnalyzerRouteImport.update({
+    id: '/ai-productivity/resume-analyzer',
+    path: '/ai-productivity/resume-analyzer',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AiProductivitySpeechToTextRoute =
+  AiProductivitySpeechToTextRouteImport.update({
+    id: '/ai-productivity/speech-to-text',
+    path: '/ai-productivity/speech-to-text',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AiProductivityTextRewriterRoute =
+  AiProductivityTextRewriterRouteImport.update({
+    id: '/ai-productivity/text-rewriter',
+    path: '/ai-productivity/text-rewriter',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AiProductivityTranslatorRoute =
+  AiProductivityTranslatorRouteImport.update({
+    id: '/ai-productivity/translator',
+    path: '/ai-productivity/translator',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiExtractTextRoute = ApiExtractTextRouteImport.update({
   id: '/api/extract-text',
   path: '/api/extract-text',
@@ -160,12 +216,98 @@ const AuthUpdatePasswordRoute = AuthUpdatePasswordRouteImport.update({
   path: '/auth/update-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CreativeAiIndexRoute = CreativeAiIndexRouteImport.update({
+  id: '/creative-ai/',
+  path: '/creative-ai/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreativeAiPosterGeneratorRoute =
+  CreativeAiPosterGeneratorRouteImport.update({
+    id: '/creative-ai/poster-generator',
+    path: '/creative-ai/poster-generator',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CreativeAiSocialPostGeneratorRoute =
+  CreativeAiSocialPostGeneratorRouteImport.update({
+    id: '/creative-ai/social-post-generator',
+    path: '/creative-ai/social-post-generator',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CreativeAiThumbnailGeneratorRoute =
+  CreativeAiThumbnailGeneratorRouteImport.update({
+    id: '/creative-ai/thumbnail-generator',
+    path: '/creative-ai/thumbnail-generator',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ImageAiIndexRoute = ImageAiIndexRouteImport.update({
+  id: '/image-ai/',
+  path: '/image-ai/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImageAiAltTextGeneratorRoute = ImageAiAltTextGeneratorRouteImport.update({
+  id: '/image-ai/alt-text-generator',
+  path: '/image-ai/alt-text-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImageAiBackgroundRemoverRoute =
+  ImageAiBackgroundRemoverRouteImport.update({
+    id: '/image-ai/background-remover',
+    path: '/image-ai/background-remover',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ImageAiCaptionGeneratorRoute = ImageAiCaptionGeneratorRouteImport.update({
+  id: '/image-ai/caption-generator',
+  path: '/image-ai/caption-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImageAiImageAnalyzerRoute = ImageAiImageAnalyzerRouteImport.update({
+  id: '/image-ai/image-analyzer',
+  path: '/image-ai/image-analyzer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImageAiImageEnhancerRoute = ImageAiImageEnhancerRouteImport.update({
+  id: '/image-ai/image-enhancer',
+  path: '/image-ai/image-enhancer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfOperationsIndexRoute = PdfOperationsIndexRouteImport.update({
+  id: '/pdf-operations/',
+  path: '/pdf-operations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfOperationsInvoiceExtractorRoute =
+  PdfOperationsInvoiceExtractorRouteImport.update({
+    id: '/pdf-operations/invoice-extractor',
+    path: '/pdf-operations/invoice-extractor',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PdfOperationsManageRoute = PdfOperationsManageRouteImport.update({
+  id: '/pdf-operations/manage',
+  path: '/pdf-operations/manage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfOperationsQaRoute = PdfOperationsQaRouteImport.update({
+  id: '/pdf-operations/qa',
+  path: '/pdf-operations/qa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfOperationsStudyNotesRoute = PdfOperationsStudyNotesRouteImport.update({
+  id: '/pdf-operations/study-notes',
+  path: '/pdf-operations/study-notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfOperationsSummarizerRoute = PdfOperationsSummarizerRouteImport.update({
+  id: '/pdf-operations/summarizer',
+  path: '/pdf-operations/summarizer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/collage-maker': typeof CollageMakerRoute
   '/dashboard': typeof DashboardRoute
+  '/file-preview': typeof FilePreviewRoute
   '/history': typeof HistoryRoute
   '/image-to-text': typeof ImageToTextRoute
   '/login': typeof LoginRoute
@@ -176,6 +318,10 @@ export interface FileRoutesByFullPath {
   '/remove-text': typeof RemoveTextRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/ai-productivity/resume-analyzer': typeof AiProductivityResumeAnalyzerRoute
+  '/ai-productivity/speech-to-text': typeof AiProductivitySpeechToTextRoute
+  '/ai-productivity/text-rewriter': typeof AiProductivityTextRewriterRoute
+  '/ai-productivity/translator': typeof AiProductivityTranslatorRoute
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/merge-pdf': typeof ApiMergePdfRoute
   '/api/pdf-merge': typeof ApiPdfMergeRoute
@@ -187,12 +333,30 @@ export interface FileRoutesByFullPath {
   '/api/snapy-edit': typeof ApiSnapyEditRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/creative-ai/poster-generator': typeof CreativeAiPosterGeneratorRoute
+  '/creative-ai/social-post-generator': typeof CreativeAiSocialPostGeneratorRoute
+  '/creative-ai/thumbnail-generator': typeof CreativeAiThumbnailGeneratorRoute
+  '/image-ai/alt-text-generator': typeof ImageAiAltTextGeneratorRoute
+  '/image-ai/background-remover': typeof ImageAiBackgroundRemoverRoute
+  '/image-ai/caption-generator': typeof ImageAiCaptionGeneratorRoute
+  '/image-ai/image-analyzer': typeof ImageAiImageAnalyzerRoute
+  '/image-ai/image-enhancer': typeof ImageAiImageEnhancerRoute
+  '/pdf-operations/invoice-extractor': typeof PdfOperationsInvoiceExtractorRoute
+  '/pdf-operations/manage': typeof PdfOperationsManageRoute
+  '/pdf-operations/qa': typeof PdfOperationsQaRoute
+  '/pdf-operations/study-notes': typeof PdfOperationsStudyNotesRoute
+  '/pdf-operations/summarizer': typeof PdfOperationsSummarizerRoute
+  '/ai-productivity/': typeof AiProductivityIndexRoute
+  '/creative-ai/': typeof CreativeAiIndexRoute
+  '/image-ai/': typeof ImageAiIndexRoute
+  '/pdf-operations/': typeof PdfOperationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/collage-maker': typeof CollageMakerRoute
   '/dashboard': typeof DashboardRoute
+  '/file-preview': typeof FilePreviewRoute
   '/history': typeof HistoryRoute
   '/image-to-text': typeof ImageToTextRoute
   '/login': typeof LoginRoute
@@ -203,6 +367,10 @@ export interface FileRoutesByTo {
   '/remove-text': typeof RemoveTextRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/ai-productivity/resume-analyzer': typeof AiProductivityResumeAnalyzerRoute
+  '/ai-productivity/speech-to-text': typeof AiProductivitySpeechToTextRoute
+  '/ai-productivity/text-rewriter': typeof AiProductivityTextRewriterRoute
+  '/ai-productivity/translator': typeof AiProductivityTranslatorRoute
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/merge-pdf': typeof ApiMergePdfRoute
   '/api/pdf-merge': typeof ApiPdfMergeRoute
@@ -214,6 +382,23 @@ export interface FileRoutesByTo {
   '/api/snapy-edit': typeof ApiSnapyEditRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/creative-ai/poster-generator': typeof CreativeAiPosterGeneratorRoute
+  '/creative-ai/social-post-generator': typeof CreativeAiSocialPostGeneratorRoute
+  '/creative-ai/thumbnail-generator': typeof CreativeAiThumbnailGeneratorRoute
+  '/image-ai/alt-text-generator': typeof ImageAiAltTextGeneratorRoute
+  '/image-ai/background-remover': typeof ImageAiBackgroundRemoverRoute
+  '/image-ai/caption-generator': typeof ImageAiCaptionGeneratorRoute
+  '/image-ai/image-analyzer': typeof ImageAiImageAnalyzerRoute
+  '/image-ai/image-enhancer': typeof ImageAiImageEnhancerRoute
+  '/pdf-operations/invoice-extractor': typeof PdfOperationsInvoiceExtractorRoute
+  '/pdf-operations/manage': typeof PdfOperationsManageRoute
+  '/pdf-operations/qa': typeof PdfOperationsQaRoute
+  '/pdf-operations/study-notes': typeof PdfOperationsStudyNotesRoute
+  '/pdf-operations/summarizer': typeof PdfOperationsSummarizerRoute
+  '/ai-productivity': typeof AiProductivityIndexRoute
+  '/creative-ai': typeof CreativeAiIndexRoute
+  '/image-ai': typeof ImageAiIndexRoute
+  '/pdf-operations': typeof PdfOperationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -221,6 +406,7 @@ export interface FileRoutesById {
   '/access': typeof AccessRoute
   '/collage-maker': typeof CollageMakerRoute
   '/dashboard': typeof DashboardRoute
+  '/file-preview': typeof FilePreviewRoute
   '/history': typeof HistoryRoute
   '/image-to-text': typeof ImageToTextRoute
   '/login': typeof LoginRoute
@@ -231,6 +417,10 @@ export interface FileRoutesById {
   '/remove-text': typeof RemoveTextRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/ai-productivity/resume-analyzer': typeof AiProductivityResumeAnalyzerRoute
+  '/ai-productivity/speech-to-text': typeof AiProductivitySpeechToTextRoute
+  '/ai-productivity/text-rewriter': typeof AiProductivityTextRewriterRoute
+  '/ai-productivity/translator': typeof AiProductivityTranslatorRoute
   '/api/extract-text': typeof ApiExtractTextRoute
   '/api/merge-pdf': typeof ApiMergePdfRoute
   '/api/pdf-merge': typeof ApiPdfMergeRoute
@@ -242,6 +432,23 @@ export interface FileRoutesById {
   '/api/snapy-edit': typeof ApiSnapyEditRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/creative-ai/poster-generator': typeof CreativeAiPosterGeneratorRoute
+  '/creative-ai/social-post-generator': typeof CreativeAiSocialPostGeneratorRoute
+  '/creative-ai/thumbnail-generator': typeof CreativeAiThumbnailGeneratorRoute
+  '/image-ai/alt-text-generator': typeof ImageAiAltTextGeneratorRoute
+  '/image-ai/background-remover': typeof ImageAiBackgroundRemoverRoute
+  '/image-ai/caption-generator': typeof ImageAiCaptionGeneratorRoute
+  '/image-ai/image-analyzer': typeof ImageAiImageAnalyzerRoute
+  '/image-ai/image-enhancer': typeof ImageAiImageEnhancerRoute
+  '/pdf-operations/invoice-extractor': typeof PdfOperationsInvoiceExtractorRoute
+  '/pdf-operations/manage': typeof PdfOperationsManageRoute
+  '/pdf-operations/qa': typeof PdfOperationsQaRoute
+  '/pdf-operations/study-notes': typeof PdfOperationsStudyNotesRoute
+  '/pdf-operations/summarizer': typeof PdfOperationsSummarizerRoute
+  '/ai-productivity/': typeof AiProductivityIndexRoute
+  '/creative-ai/': typeof CreativeAiIndexRoute
+  '/image-ai/': typeof ImageAiIndexRoute
+  '/pdf-operations/': typeof PdfOperationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -250,6 +457,7 @@ export interface FileRouteTypes {
     | '/access'
     | '/collage-maker'
     | '/dashboard'
+    | '/file-preview'
     | '/history'
     | '/image-to-text'
     | '/login'
@@ -260,6 +468,10 @@ export interface FileRouteTypes {
     | '/remove-text'
     | '/settings'
     | '/signup'
+    | '/ai-productivity/resume-analyzer'
+    | '/ai-productivity/speech-to-text'
+    | '/ai-productivity/text-rewriter'
+    | '/ai-productivity/translator'
     | '/api/extract-text'
     | '/api/merge-pdf'
     | '/api/pdf-merge'
@@ -271,12 +483,30 @@ export interface FileRouteTypes {
     | '/api/snapy-edit'
     | '/auth/callback'
     | '/auth/update-password'
+    | '/creative-ai/poster-generator'
+    | '/creative-ai/social-post-generator'
+    | '/creative-ai/thumbnail-generator'
+    | '/image-ai/alt-text-generator'
+    | '/image-ai/background-remover'
+    | '/image-ai/caption-generator'
+    | '/image-ai/image-analyzer'
+    | '/image-ai/image-enhancer'
+    | '/pdf-operations/invoice-extractor'
+    | '/pdf-operations/manage'
+    | '/pdf-operations/qa'
+    | '/pdf-operations/study-notes'
+    | '/pdf-operations/summarizer'
+    | '/ai-productivity/'
+    | '/creative-ai/'
+    | '/image-ai/'
+    | '/pdf-operations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/access'
     | '/collage-maker'
     | '/dashboard'
+    | '/file-preview'
     | '/history'
     | '/image-to-text'
     | '/login'
@@ -287,6 +517,10 @@ export interface FileRouteTypes {
     | '/remove-text'
     | '/settings'
     | '/signup'
+    | '/ai-productivity/resume-analyzer'
+    | '/ai-productivity/speech-to-text'
+    | '/ai-productivity/text-rewriter'
+    | '/ai-productivity/translator'
     | '/api/extract-text'
     | '/api/merge-pdf'
     | '/api/pdf-merge'
@@ -298,12 +532,30 @@ export interface FileRouteTypes {
     | '/api/snapy-edit'
     | '/auth/callback'
     | '/auth/update-password'
+    | '/creative-ai/poster-generator'
+    | '/creative-ai/social-post-generator'
+    | '/creative-ai/thumbnail-generator'
+    | '/image-ai/alt-text-generator'
+    | '/image-ai/background-remover'
+    | '/image-ai/caption-generator'
+    | '/image-ai/image-analyzer'
+    | '/image-ai/image-enhancer'
+    | '/pdf-operations/invoice-extractor'
+    | '/pdf-operations/manage'
+    | '/pdf-operations/qa'
+    | '/pdf-operations/study-notes'
+    | '/pdf-operations/summarizer'
+    | '/ai-productivity'
+    | '/creative-ai'
+    | '/image-ai'
+    | '/pdf-operations'
   id:
     | '__root__'
     | '/'
     | '/access'
     | '/collage-maker'
     | '/dashboard'
+    | '/file-preview'
     | '/history'
     | '/image-to-text'
     | '/login'
@@ -314,6 +566,10 @@ export interface FileRouteTypes {
     | '/remove-text'
     | '/settings'
     | '/signup'
+    | '/ai-productivity/resume-analyzer'
+    | '/ai-productivity/speech-to-text'
+    | '/ai-productivity/text-rewriter'
+    | '/ai-productivity/translator'
     | '/api/extract-text'
     | '/api/merge-pdf'
     | '/api/pdf-merge'
@@ -325,6 +581,23 @@ export interface FileRouteTypes {
     | '/api/snapy-edit'
     | '/auth/callback'
     | '/auth/update-password'
+    | '/creative-ai/poster-generator'
+    | '/creative-ai/social-post-generator'
+    | '/creative-ai/thumbnail-generator'
+    | '/image-ai/alt-text-generator'
+    | '/image-ai/background-remover'
+    | '/image-ai/caption-generator'
+    | '/image-ai/image-analyzer'
+    | '/image-ai/image-enhancer'
+    | '/pdf-operations/invoice-extractor'
+    | '/pdf-operations/manage'
+    | '/pdf-operations/qa'
+    | '/pdf-operations/study-notes'
+    | '/pdf-operations/summarizer'
+    | '/ai-productivity/'
+    | '/creative-ai/'
+    | '/image-ai/'
+    | '/pdf-operations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -332,6 +605,7 @@ export interface RootRouteChildren {
   AccessRoute: typeof AccessRoute
   CollageMakerRoute: typeof CollageMakerRoute
   DashboardRoute: typeof DashboardRoute
+  FilePreviewRoute: typeof FilePreviewRoute
   HistoryRoute: typeof HistoryRoute
   ImageToTextRoute: typeof ImageToTextRoute
   LoginRoute: typeof LoginRoute
@@ -342,6 +616,10 @@ export interface RootRouteChildren {
   RemoveTextRoute: typeof RemoveTextRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  AiProductivityResumeAnalyzerRoute: typeof AiProductivityResumeAnalyzerRoute
+  AiProductivitySpeechToTextRoute: typeof AiProductivitySpeechToTextRoute
+  AiProductivityTextRewriterRoute: typeof AiProductivityTextRewriterRoute
+  AiProductivityTranslatorRoute: typeof AiProductivityTranslatorRoute
   ApiExtractTextRoute: typeof ApiExtractTextRoute
   ApiMergePdfRoute: typeof ApiMergePdfRoute
   ApiPdfMergeRoute: typeof ApiPdfMergeRoute
@@ -353,6 +631,23 @@ export interface RootRouteChildren {
   ApiSnapyEditRoute: typeof ApiSnapyEditRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthUpdatePasswordRoute: typeof AuthUpdatePasswordRoute
+  CreativeAiPosterGeneratorRoute: typeof CreativeAiPosterGeneratorRoute
+  CreativeAiSocialPostGeneratorRoute: typeof CreativeAiSocialPostGeneratorRoute
+  CreativeAiThumbnailGeneratorRoute: typeof CreativeAiThumbnailGeneratorRoute
+  ImageAiAltTextGeneratorRoute: typeof ImageAiAltTextGeneratorRoute
+  ImageAiBackgroundRemoverRoute: typeof ImageAiBackgroundRemoverRoute
+  ImageAiCaptionGeneratorRoute: typeof ImageAiCaptionGeneratorRoute
+  ImageAiImageAnalyzerRoute: typeof ImageAiImageAnalyzerRoute
+  ImageAiImageEnhancerRoute: typeof ImageAiImageEnhancerRoute
+  PdfOperationsInvoiceExtractorRoute: typeof PdfOperationsInvoiceExtractorRoute
+  PdfOperationsManageRoute: typeof PdfOperationsManageRoute
+  PdfOperationsQaRoute: typeof PdfOperationsQaRoute
+  PdfOperationsStudyNotesRoute: typeof PdfOperationsStudyNotesRoute
+  PdfOperationsSummarizerRoute: typeof PdfOperationsSummarizerRoute
+  AiProductivityIndexRoute: typeof AiProductivityIndexRoute
+  CreativeAiIndexRoute: typeof CreativeAiIndexRoute
+  ImageAiIndexRoute: typeof ImageAiIndexRoute
+  PdfOperationsIndexRoute: typeof PdfOperationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -383,6 +678,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/file-preview': {
+      id: '/file-preview'
+      path: '/file-preview'
+      fullPath: '/file-preview'
+      preLoaderRoute: typeof FilePreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -453,6 +755,41 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-productivity/': {
+      id: '/ai-productivity/'
+      path: '/ai-productivity'
+      fullPath: '/ai-productivity/'
+      preLoaderRoute: typeof AiProductivityIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-productivity/resume-analyzer': {
+      id: '/ai-productivity/resume-analyzer'
+      path: '/ai-productivity/resume-analyzer'
+      fullPath: '/ai-productivity/resume-analyzer'
+      preLoaderRoute: typeof AiProductivityResumeAnalyzerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-productivity/speech-to-text': {
+      id: '/ai-productivity/speech-to-text'
+      path: '/ai-productivity/speech-to-text'
+      fullPath: '/ai-productivity/speech-to-text'
+      preLoaderRoute: typeof AiProductivitySpeechToTextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-productivity/text-rewriter': {
+      id: '/ai-productivity/text-rewriter'
+      path: '/ai-productivity/text-rewriter'
+      fullPath: '/ai-productivity/text-rewriter'
+      preLoaderRoute: typeof AiProductivityTextRewriterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-productivity/translator': {
+      id: '/ai-productivity/translator'
+      path: '/ai-productivity/translator'
+      fullPath: '/ai-productivity/translator'
+      preLoaderRoute: typeof AiProductivityTranslatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/extract-text': {
@@ -532,6 +869,118 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthUpdatePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/creative-ai/': {
+      id: '/creative-ai/'
+      path: '/creative-ai'
+      fullPath: '/creative-ai/'
+      preLoaderRoute: typeof CreativeAiIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creative-ai/poster-generator': {
+      id: '/creative-ai/poster-generator'
+      path: '/creative-ai/poster-generator'
+      fullPath: '/creative-ai/poster-generator'
+      preLoaderRoute: typeof CreativeAiPosterGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creative-ai/social-post-generator': {
+      id: '/creative-ai/social-post-generator'
+      path: '/creative-ai/social-post-generator'
+      fullPath: '/creative-ai/social-post-generator'
+      preLoaderRoute: typeof CreativeAiSocialPostGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creative-ai/thumbnail-generator': {
+      id: '/creative-ai/thumbnail-generator'
+      path: '/creative-ai/thumbnail-generator'
+      fullPath: '/creative-ai/thumbnail-generator'
+      preLoaderRoute: typeof CreativeAiThumbnailGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/image-ai/': {
+      id: '/image-ai/'
+      path: '/image-ai'
+      fullPath: '/image-ai/'
+      preLoaderRoute: typeof ImageAiIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/image-ai/alt-text-generator': {
+      id: '/image-ai/alt-text-generator'
+      path: '/image-ai/alt-text-generator'
+      fullPath: '/image-ai/alt-text-generator'
+      preLoaderRoute: typeof ImageAiAltTextGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/image-ai/background-remover': {
+      id: '/image-ai/background-remover'
+      path: '/image-ai/background-remover'
+      fullPath: '/image-ai/background-remover'
+      preLoaderRoute: typeof ImageAiBackgroundRemoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/image-ai/caption-generator': {
+      id: '/image-ai/caption-generator'
+      path: '/image-ai/caption-generator'
+      fullPath: '/image-ai/caption-generator'
+      preLoaderRoute: typeof ImageAiCaptionGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/image-ai/image-analyzer': {
+      id: '/image-ai/image-analyzer'
+      path: '/image-ai/image-analyzer'
+      fullPath: '/image-ai/image-analyzer'
+      preLoaderRoute: typeof ImageAiImageAnalyzerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/image-ai/image-enhancer': {
+      id: '/image-ai/image-enhancer'
+      path: '/image-ai/image-enhancer'
+      fullPath: '/image-ai/image-enhancer'
+      preLoaderRoute: typeof ImageAiImageEnhancerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf-operations/': {
+      id: '/pdf-operations/'
+      path: '/pdf-operations'
+      fullPath: '/pdf-operations/'
+      preLoaderRoute: typeof PdfOperationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf-operations/invoice-extractor': {
+      id: '/pdf-operations/invoice-extractor'
+      path: '/pdf-operations/invoice-extractor'
+      fullPath: '/pdf-operations/invoice-extractor'
+      preLoaderRoute: typeof PdfOperationsInvoiceExtractorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf-operations/manage': {
+      id: '/pdf-operations/manage'
+      path: '/pdf-operations/manage'
+      fullPath: '/pdf-operations/manage'
+      preLoaderRoute: typeof PdfOperationsManageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf-operations/qa': {
+      id: '/pdf-operations/qa'
+      path: '/pdf-operations/qa'
+      fullPath: '/pdf-operations/qa'
+      preLoaderRoute: typeof PdfOperationsQaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf-operations/study-notes': {
+      id: '/pdf-operations/study-notes'
+      path: '/pdf-operations/study-notes'
+      fullPath: '/pdf-operations/study-notes'
+      preLoaderRoute: typeof PdfOperationsStudyNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf-operations/summarizer': {
+      id: '/pdf-operations/summarizer'
+      path: '/pdf-operations/summarizer'
+      fullPath: '/pdf-operations/summarizer'
+      preLoaderRoute: typeof PdfOperationsSummarizerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -540,6 +989,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccessRoute: AccessRoute,
   CollageMakerRoute: CollageMakerRoute,
   DashboardRoute: DashboardRoute,
+  FilePreviewRoute: FilePreviewRoute,
   HistoryRoute: HistoryRoute,
   ImageToTextRoute: ImageToTextRoute,
   LoginRoute: LoginRoute,
@@ -550,6 +1000,10 @@ const rootRouteChildren: RootRouteChildren = {
   RemoveTextRoute: RemoveTextRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  AiProductivityResumeAnalyzerRoute: AiProductivityResumeAnalyzerRoute,
+  AiProductivitySpeechToTextRoute: AiProductivitySpeechToTextRoute,
+  AiProductivityTextRewriterRoute: AiProductivityTextRewriterRoute,
+  AiProductivityTranslatorRoute: AiProductivityTranslatorRoute,
   ApiExtractTextRoute: ApiExtractTextRoute,
   ApiMergePdfRoute: ApiMergePdfRoute,
   ApiPdfMergeRoute: ApiPdfMergeRoute,
@@ -561,6 +1015,23 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSnapyEditRoute: ApiSnapyEditRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthUpdatePasswordRoute: AuthUpdatePasswordRoute,
+  CreativeAiPosterGeneratorRoute: CreativeAiPosterGeneratorRoute,
+  CreativeAiSocialPostGeneratorRoute: CreativeAiSocialPostGeneratorRoute,
+  CreativeAiThumbnailGeneratorRoute: CreativeAiThumbnailGeneratorRoute,
+  ImageAiAltTextGeneratorRoute: ImageAiAltTextGeneratorRoute,
+  ImageAiBackgroundRemoverRoute: ImageAiBackgroundRemoverRoute,
+  ImageAiCaptionGeneratorRoute: ImageAiCaptionGeneratorRoute,
+  ImageAiImageAnalyzerRoute: ImageAiImageAnalyzerRoute,
+  ImageAiImageEnhancerRoute: ImageAiImageEnhancerRoute,
+  PdfOperationsInvoiceExtractorRoute: PdfOperationsInvoiceExtractorRoute,
+  PdfOperationsManageRoute: PdfOperationsManageRoute,
+  PdfOperationsQaRoute: PdfOperationsQaRoute,
+  PdfOperationsStudyNotesRoute: PdfOperationsStudyNotesRoute,
+  PdfOperationsSummarizerRoute: PdfOperationsSummarizerRoute,
+  AiProductivityIndexRoute: AiProductivityIndexRoute,
+  CreativeAiIndexRoute: CreativeAiIndexRoute,
+  ImageAiIndexRoute: ImageAiIndexRoute,
+  PdfOperationsIndexRoute: PdfOperationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

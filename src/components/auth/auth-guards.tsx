@@ -21,13 +21,13 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     if (!session) {
-      void navigate({ to: "/", replace: true, viewTransition: true });
+      void navigate({ to: "/login", replace: true, viewTransition: true });
     }
   }, [ready, session, navigate]);
 
   if (session) return children;
   if (!ready) return <AuthSplash message="Checking your session…" />;
-  return <AuthSplash message="Taking you home…" />;
+  return <AuthSplash message="Taking you to log in…" />;
 }
 
 export function RequireGuest({ children }: { children: React.ReactNode }) {

@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ToolCard } from "@/components/snapcut/tool-card";
 import { NewProjectDialog } from "@/components/snapcut/new-project-dialog";
+import { ToolSection } from "@/components/snapcut/tool-section";
 import { Icon } from "@/components/snapcut/icon";
 import { useAuth } from "@/components/providers/auth-provider";
 import { getHistoryStats, listHistory, type HistoryRecord, type HistoryStats } from "@/services/history-service";
+import {
+  CREATIVE_AI_TOOLS,
+  IMAGE_AI_TOOLS,
+  PDF_TOOLS,
+  PRODUCTIVITY_TOOLS,
+} from "@/data/tools";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard")({
@@ -97,6 +103,7 @@ function DashboardPage() {
     extractText: 0,
     collages: 0,
     snapy: 0,
+    pdfOperations: 0,
   });
   const [recent, setRecent] = useState<HistoryRecord[]>([]);
   const name = session?.name?.split(" ")[0] ?? "Creator";
@@ -169,44 +176,10 @@ function DashboardPage() {
         ) : null}
       </div>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
-        <ToolCard
-          to="/remove-text"
-          icon="ink_eraser"
-          title="Remove Text"
-          description="Effortlessly erase unwanted text or watermarks from any image while preserving the background using AI."
-        />
-        <ToolCard
-          to="/image-to-text"
-          icon="article"
-          title="Image to Text"
-          description="Extract raw text data from screenshots, documents, and complex layouts instantly with high precision OCR."
-        />
-        <ToolCard
-          to="/collage-maker"
-          icon="dashboard_customize"
-          title="Collage Maker"
-          description="Generate professional, seamless collages with intelligent auto-layout and smart framing algorithms."
-        />
-        <ToolCard
-          to="/pdf-to-word"
-          icon="description"
-          title="PDF to Word"
-          description="Convert your PDF documents into fully editable Word files instantly."
-        />
-        <ToolCard
-          to="/pdf-to-pptx"
-          icon="slideshow"
-          title="PDF to PPTX"
-          description="Transform your PDFs into editable PowerPoint presentations effortlessly."
-        />
-        <ToolCard
-          to="/pdf-merger"
-          icon="picture_as_pdf"
-          title="PDF Merger"
-          description="Combine multiple PDF documents into a single organized file seamlessly."
-        />
-      </section>
+      <ToolSection title="Image AI" viewAllTo="/image-ai" tools={IMAGE_AI_TOOLS} limit={6} />
+      <ToolSection title="PDF & Documents" viewAllTo="/pdf-operations" tools={PDF_TOOLS} limit={6} />
+      <ToolSection title="Creative AI" viewAllTo="/creative-ai" tools={CREATIVE_AI_TOOLS} />
+      <ToolSection title="AI Productivity" viewAllTo="/ai-productivity" tools={PRODUCTIVITY_TOOLS} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <section className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
@@ -224,7 +197,7 @@ function DashboardPage() {
           <div className="flex flex-col gap-2">
             {recent.length === 0 ? (
               <p className="font-body-md text-body-md text-on-surface-variant py-6">
-                No operations yet. Run Remove Text, Image to Text, Collage Maker, or Snapy to see activity here.
+                No operations yet. Run a tool to see activity here.
               </p>
             ) : (
               recent.map((item) => (
@@ -243,7 +216,9 @@ function DashboardPage() {
                               ? "dashboard_customize"
                               : item.category === "snapy"
                                 ? "dashboard"
-                                : "article"
+                                : item.category === "pdf-operations"
+                                  ? "picture_as_pdf"
+                                  : "article"
                         }
                         size={20}
                       />
@@ -287,12 +262,13 @@ function DashboardPage() {
                 <p>Image to text: {stats.extractText}</p>
                 <p>Collages: {stats.collages}</p>
                 <p>Snapy: {stats.snapy}</p>
+                <p>PDF operations: {stats.pdfOperations}</p>
               </div>
             </div>
           </div>
           <div className="relative z-10 mt-auto pt-4 border-t border-outline-variant">
             <p className="font-label-md text-label-md text-on-background mb-4">
-              Running low on compute? Upgrade your tier for unlimited operations.
+              Need more capacity? Upgrade your tier for unlimited operations.
             </p>
             <Link
               to="/pricing"

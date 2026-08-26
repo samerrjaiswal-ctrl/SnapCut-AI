@@ -1,9 +1,17 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Icon } from "@/components/snapcut/icon";
 import { OverlayLoader } from "@/components/snapcut/overlay-loader";
+import { ToolBreadcrumb } from "@/components/snapcut/tool-breadcrumb";
 import { cn } from "@/lib/utils";
+import {
+  cleanupPdfJobPaths,
+  uploadPdfJobFile,
+  uploadPdfJobFiles,
+  validatePdfFile,
+} from "@/services/pdf-job-service";
+import { savePdfResult, type PdfOperationType } from "@/services/history-service";
 
 export type PdfMode = "word" | "pptx" | "merger";
 
@@ -12,7 +20,7 @@ type PdfOperationsViewProps = {
 };
 
 export function PdfOperationsView({ initialMode = "word" }: PdfOperationsViewProps) {
-  const [mode, setMode] = useState<PdfMode>(initialMode);
+  const mode = initialMode;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const multiFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -25,26 +33,11 @@ export function PdfOperationsView({ initialMode = "word" }: PdfOperationsViewPro
   const [status, setStatus] = useState<"idle" | "processing" | "ready" | "error">("idle");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("Please try again.");
-  const navigate = useNavigate();
 
   const isProcessing = status === "processing";
   const isWord = mode === "word";
   const isPptx = mode === "pptx";
   const isMerger = mode === "merger";
-
-  function handleModeChange(newMode: PdfMode) {
-    if (newMode === mode) return;
-    setMode(newMode);
-    setStatus("idle");
-    setResultUrl(null);
-    const targetRoute =
-      newMode === "word"
-        ? "/pdf-to-word"
-        : newMode === "pptx"
-          ? "/pdf-to-pptx"
-          : "/pdf-merger";
-    void navigate({ to: targetRoute, replace: true });
-  }
 
   function resetWorkspace() {
     setFile(null);
@@ -119,29 +112,40 @@ export function PdfOperationsView({ initialMode = "word" }: PdfOperationsViewPro
     }
 
     setStatus("processing");
+    const uploadedPaths: string[] = [];
     try {
-      const formData = new FormData();
-
-      if (isMerger) {
-        mergeFiles.forEach((f, idx) => {
-          formData.append(`file_${idx + 1}`, f);
-        });
-      } else {
-        if (file) {
-          formData.append("file", file);
-          formData.append("data", file);
-        }
-      }
-
+      // Upload PDFs to Supabase first, then POST only a small JSON body to Vercel.
+      // Sending the full PDF through /api/* hits Vercel's ~4.5 MB request limit (HTTP 413).
       const endpoint = isWord
         ? "/api/pdf-to-word"
         : isPptx
           ? "/api/pdf-to-pptx"
           : "/api/merge-pdf";
 
+      let accessToken: string;
+      let body: { path: string; filename?: string } | { paths: string[] };
+
+      if (isMerger) {
+        mergeFiles.forEach(validatePdfFile);
+        const uploaded = await uploadPdfJobFiles(mergeFiles);
+        uploadedPaths.push(...uploaded.paths);
+        accessToken = uploaded.accessToken;
+        body = { paths: uploaded.paths };
+      } else {
+        validatePdfFile(file!);
+        const uploaded = await uploadPdfJobFile(file!);
+        uploadedPaths.push(uploaded.path);
+        accessToken = uploaded.accessToken;
+        body = { path: uploaded.path, filename: file!.name };
+      }
+
       const response = await fetch(endpoint, {
         method: "POST",
-        body: formData,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -150,6 +154,11 @@ export function PdfOperationsView({ initialMode = "word" }: PdfOperationsViewPro
           const errJson = await response.json();
           errDetail = errJson.error || errJson.message || "";
         } catch {}
+        if (response.status === 413) {
+          throw new Error(
+            "This PDF is too large for the deployment gateway. Please try a smaller file or contact support.",
+          );
+        }
         throw new Error(
           errDetail ||
             `Processing service returned status ${response.status}. Make sure your n8n workflow is active.`,
@@ -157,6 +166,7 @@ export function PdfOperationsView({ initialMode = "word" }: PdfOperationsViewPro
       }
 
       const contentType = (response.headers.get("content-type") || "").toLowerCase();
+      let resultBlob: Blob | null = null;
 
       if (contentType.includes("application/json")) {
         const json = await response.json();
@@ -164,20 +174,45 @@ export function PdfOperationsView({ initialMode = "word" }: PdfOperationsViewPro
           throw new Error(json.error || "Operation failed on n8n workflow.");
         }
         if (json.url || json.downloadUrl) {
-          setResultUrl(json.url || json.downloadUrl);
+          const remote = await fetch(json.url || json.downloadUrl);
+          if (!remote.ok) throw new Error("Could not download the converted file.");
+          resultBlob = await remote.blob();
+          setResultUrl(URL.createObjectURL(resultBlob));
         } else if (json.data && typeof json.data === "string" && json.data.startsWith("data:")) {
+          const remote = await fetch(json.data);
+          resultBlob = await remote.blob();
           setResultUrl(json.data);
         } else {
-          const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
-          setResultUrl(URL.createObjectURL(blob));
+          resultBlob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
+          setResultUrl(URL.createObjectURL(resultBlob));
         }
       } else {
-        const blob = await response.blob();
-        if (!blob || blob.size === 0) {
+        resultBlob = await response.blob();
+        if (!resultBlob || resultBlob.size === 0) {
           throw new Error("No output file was returned by the n8n workflow.");
         }
-        const url = URL.createObjectURL(blob);
-        setResultUrl(url);
+        setResultUrl(URL.createObjectURL(resultBlob));
+      }
+
+      if (resultBlob && resultBlob.size > 0) {
+        const operationType: PdfOperationType = isWord
+          ? "pdf_to_word"
+          : isPptx
+            ? "pdf_to_pptx"
+            : "pdf_merge";
+        const sourceName = isMerger
+          ? "merged-document.pdf"
+          : file?.name || "document.pdf";
+        try {
+          await savePdfResult({
+            operationType,
+            fileName: sourceName,
+            resultBlob,
+          });
+        } catch (saveError) {
+          if (import.meta.env.DEV) console.error(saveError);
+          toast.error("Converted, but could not save to History.");
+        }
       }
 
       setStatus("ready");
@@ -193,6 +228,8 @@ export function PdfOperationsView({ initialMode = "word" }: PdfOperationsViewPro
       setErrorMessage(message);
       setStatus("error");
       toast.error(message);
+    } finally {
+      if (uploadedPaths.length) void cleanupPdfJobPaths(uploadedPaths);
     }
   }
 
@@ -231,61 +268,29 @@ export function PdfOperationsView({ initialMode = "word" }: PdfOperationsViewPro
       <div className="px-container-margin-mobile md:px-container-margin-desktop py-6 md:py-12">
         <div className="w-full flex flex-col gap-4 md:gap-6 md:flex-row md:items-end md:justify-between min-w-0">
           <header className="mb-0 min-w-0">
-            <div className="flex flex-wrap items-center gap-3 mb-2">
-              <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface font-bold tracking-tight">
-                {isWord ? "PDF to Word" : isPptx ? "PDF to PPTX" : "PDF Merger"}
-              </h1>
-
-              {/* Normal Mode Buttons Beside Title */}
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleModeChange("word")}
-                  className={cn(
-                    "flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-label-md text-label-md transition-all",
-                    isWord
-                      ? "bg-secondary text-on-secondary shadow-md font-semibold border border-secondary"
-                      : "bg-surface border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low",
-                  )}
-                >
-                  <Icon name="description" size={16} />
-                  Word
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleModeChange("pptx")}
-                  className={cn(
-                    "flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-label-md text-label-md transition-all",
-                    isPptx
-                      ? "bg-secondary text-on-secondary shadow-md font-semibold border border-secondary"
-                      : "bg-surface border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low",
-                  )}
-                >
-                  <Icon name="slideshow" size={16} />
-                  PPT
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleModeChange("merger")}
-                  className={cn(
-                    "flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-label-md text-label-md transition-all",
-                    isMerger
-                      ? "bg-secondary text-on-secondary shadow-md font-semibold border border-secondary"
-                      : "bg-surface border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low",
-                  )}
-                >
-                  <Icon name="picture_as_pdf" size={16} />
-                  PDF Merger
-                </button>
-              </div>
-            </div>
-
+            <ToolBreadcrumb
+              items={[
+                { label: "Dashboard", to: "/dashboard" },
+                { label: "PDF & Documents", to: "/pdf-operations" },
+                {
+                  label: isWord ? "PDF to Word" : isPptx ? "PDF to PPTX" : "PDF Merger",
+                },
+              ]}
+            />
+            <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface font-bold tracking-tight mb-2">
+              {isWord ? "PDF to Word" : isPptx ? "PDF to PPTX" : "PDF Merger"}
+            </h1>
             <p className="font-body-md md:font-body-lg text-body-md md:text-body-lg text-on-surface-variant">
               {isWord
                 ? "Convert your PDF documents into fully editable Word files instantly."
                 : isPptx
                   ? "Transform your PDFs into editable PowerPoint presentations effortlessly."
                   : "Combine multiple PDF documents into a single organized file seamlessly."}
+            </p>
+            <p className="mt-2 font-label-sm text-label-sm text-on-surface-variant">
+              <Link to="/pdf-operations" className="text-secondary hover:underline">
+                ← All PDF tools
+              </Link>
             </p>
           </header>
 

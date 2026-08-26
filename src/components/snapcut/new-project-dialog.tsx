@@ -10,8 +10,11 @@ import { Icon } from "@/components/snapcut/icon";
 import { requestOpenSnapy } from "@/components/snapy/snapy-widget";
 
 const TOOLS = [
+  { to: "/image-ai", icon: "photo_library", title: "Image AI" },
+  { to: "/pdf-operations", icon: "picture_as_pdf", title: "PDF Operations" },
+  { to: "/creative-ai", icon: "palette", title: "Creative AI" },
+  { to: "/ai-productivity", icon: "bolt", title: "AI Productivity" },
   { to: "/remove-text", icon: "ink_eraser", title: "Remove Text" },
-  { to: "/image-to-text", icon: "article", title: "Image to Text" },
   { to: "/collage-maker", icon: "dashboard_customize", title: "Collage Maker" },
 ] as const;
 
@@ -34,10 +37,10 @@ export function NewProjectDialog({ open, onOpenChange }: NewProjectDialogProps) 
             New Project
           </DialogTitle>
           <DialogDescription className="text-on-surface-variant">
-            Choose a tool to start working.
+            Choose a tool category or jump into a favorite.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3">
+        <div className="grid gap-3 max-h-[60vh] overflow-y-auto pr-1">
           {TOOLS.map((tool) => (
             <Link
               key={tool.to}

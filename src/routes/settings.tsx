@@ -67,6 +67,7 @@ function SettingsPage() {
   const [extractCount, setExtractCount] = useState(0);
   const [collageCount, setCollageCount] = useState(0);
   const [snapyCount, setSnapyCount] = useState(0);
+  const [pdfCount, setPdfCount] = useState(0);
   const dirty = name !== (session?.name ?? "User Workspace");
 
   useEffect(() => {
@@ -86,6 +87,7 @@ function SettingsPage() {
       setExtractCount(stats.extractText);
       setCollageCount(stats.collages);
       setSnapyCount(stats.snapy);
+      setPdfCount(stats.pdfOperations);
     });
     void listVerifiedMfaFactors()
       .then((factors) => {
@@ -358,7 +360,14 @@ function SettingsPage() {
                         value={session?.email ?? "user@example.com"}
                       />
                       <p className="text-xs text-on-surface-variant mt-1">
-                        Email cannot be changed directly. Contact support.
+                        Email cannot be changed directly.{" "}
+                        <a
+                          href="mailto:hello@snapcut.ai?subject=Change%20email"
+                          className="text-secondary font-medium hover:underline"
+                        >
+                          Contact support
+                        </a>
+                        .
                       </p>
                     </div>
                   </div>
@@ -433,6 +442,12 @@ function SettingsPage() {
                   value={`${snapyCount}`}
                   width={`${Math.min(100, snapyCount * 10)}%`}
                   accent="bg-secondary-container"
+                />
+                <UsageBar
+                  label="PDF Operations"
+                  value={`${pdfCount}`}
+                  width={`${Math.min(100, pdfCount * 10)}%`}
+                  accent="bg-error-container"
                 />
               </div>
             </section>

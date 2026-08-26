@@ -166,11 +166,12 @@ export function SnapyWidget() {
   }, []);
 
   function openPanel() {
-    if (openRef.current || closingRef.current) return;
+    if (openRef.current && !closingRef.current) return;
     if (closeTimer.current) {
       window.clearTimeout(closeTimer.current);
       closeTimer.current = null;
     }
+    closingRef.current = false;
     setOpen(true);
     setClosing(false);
   }
@@ -178,16 +179,24 @@ export function SnapyWidget() {
   function closePanel() {
     if (closingRef.current) return;
     if (!openRef.current) return;
+    closingRef.current = true;
     if (recordingRef.current) stopRecording(true);
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
     if (prefersReducedMotion()) {
       setOpen(false);
       setClosing(false);
+      closingRef.current = false;
       return;
     }
     setClosing(true);
     closeTimer.current = window.setTimeout(() => {
       setOpen(false);
       setClosing(false);
+      closingRef.current = false;
+      closeTimer.current = null;
     }, CLOSE_MS);
   }
 
@@ -350,7 +359,10 @@ export function SnapyWidget() {
     const tick = () => {
       analyser.getFloatTimeDomainData(samples);
       let sum = 0;
-      for (let i = 0; i < samples.length; i += 1) sum += samples[i] * samples[i];
+      for (let i = 0; i < samples.length; i += 1) {
+        const sample = samples[i] ?? 0;
+        sum += sample * sample;
+      }
       const rms = Math.sqrt(sum / samples.length);
       const now = performance.now();
       if (rms >= SILENCE_RMS) {
@@ -927,8 +939,8 @@ Your prompt is back in the box — edit it and send.
         <button
           type="button"
           className={cn("snapy-fab pointer-events-auto relative h-16 w-16", !open && !closing && "snapy-fab-idle")}
-          aria-label={open ? "Close Snapy" : "Open Snapy"}
-          aria-expanded={open}
+          aria-label={open && !closing ? "Close Snapy" : "Open Snapy"}
+          aria-expanded={open && !closing}
           onClick={handleFabClick}
         >
           <span className="snapy-fab-glow" aria-hidden />

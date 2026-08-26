@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/snapcut/page-header";
+import { ToolBreadcrumb } from "@/components/snapcut/tool-breadcrumb";
 import { UploadArea } from "@/components/snapcut/upload-area";
 import { ProcessingState, ErrorState } from "@/components/snapcut/states";
 import { Icon } from "@/components/snapcut/icon";
@@ -140,10 +141,19 @@ function ImageToTextPage() {
     <>
       <div className="px-container-margin-mobile md:px-container-margin-desktop py-6 md:py-12">
           <div className="w-full flex flex-col gap-4 md:gap-6 md:flex-row md:items-end md:justify-between min-w-0">
-            <PageHeader
-              title="Image to Text"
-              description="Extract text from any image with high precision OCR technology."
-            />
+            <div className="min-w-0">
+              <ToolBreadcrumb
+                items={[
+                  { label: "Dashboard", to: "/dashboard" },
+                  { label: "Image AI", to: "/image-ai" },
+                  { label: "Image to Text" },
+                ]}
+              />
+              <PageHeader
+                title="Image to Text"
+                description="Extract text from any image with high precision OCR technology."
+              />
+            </div>
             <ToolActions
               actionLabel="Extract Text"
               actionIcon="article"

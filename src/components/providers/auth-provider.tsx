@@ -120,7 +120,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void supabase.auth
       .getSession()
-      .then(({ data }) => applyAuth(data.session))
+      .then(async ({ data }) => {
+        const session = data.session;
+        if (!session) {
+          await applyAuth(null);
+          return;
+        }
+        // Validate the session; clear stale refresh tokens that otherwise spam 400s.
+        const { error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          await supabase.auth.signOut({ scope: "local" });
+          await applyAuth(null);
+          return;
+        }
+        await applyAuth(session);
+      })
       .catch(() => undefined)
       .finally(() => {
         clearTimeout(readyTimer);

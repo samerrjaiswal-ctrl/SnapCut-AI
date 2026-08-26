@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 type UploadAreaProps = {
   label?: string;
   accept?: string;
+  hint?: string;
   onFile: (file: File) => void;
   className?: string;
 };
@@ -12,6 +13,7 @@ type UploadAreaProps = {
 export function UploadArea({
   label = "Drag and drop an image, or click to upload",
   accept = "image/*",
+  hint = "PNG, JPG, or WEBP",
   onFile,
   className,
 }: UploadAreaProps) {
@@ -43,7 +45,7 @@ export function UploadArea({
       </span>
       <div>
         <p className="font-label-md text-label-md text-on-surface">{label}</p>
-        <p className="font-body-md text-body-md text-on-surface-variant mt-1">PNG, JPG, or WEBP</p>
+        <p className="font-body-md text-body-md text-on-surface-variant mt-1">{hint}</p>
       </div>
       <input
         ref={inputRef}

@@ -35,10 +35,53 @@ function saveBlob(blob: Blob, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
 }
 
+function pdfOpenLabel(item: HistoryRecord) {
+  const hint = `${item.name} ${item.description}`.toLowerCase();
+  if (hint.includes("word") || hint.endsWith(".docx") || item.name.toLowerCase().endsWith(".docx")) {
+    return "Open in Word";
+  }
+  if (
+    hint.includes("powerpoint") ||
+    hint.includes("pptx") ||
+    hint.includes(" ppt") ||
+    item.name.toLowerCase().endsWith(".pptx")
+  ) {
+    return "Open in PPT";
+  }
+  return "Open PDF";
+}
+
+function previewKindForItem(item: HistoryRecord): "pdf" | "word" | "ppt" {
+  const label = pdfOpenLabel(item);
+  if (label === "Open in Word") return "word";
+  if (label === "Open in PPT") return "ppt";
+  return "pdf";
+}
+
+/** Open a same-origin preview tab synchronously (not blocked by Chrome). */
+function openPreviewTab(path: string, kind: "pdf" | "word" | "ppt", name: string) {
+  const params = new URLSearchParams({
+    path,
+    kind,
+    name,
+  });
+  const href = `/file-preview?${params.toString()}`;
+  // Prefer <a target=_blank> inside the user gesture — more reliable than window.open.
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  return true;
+}
+
 export function HistoryCard({ item, onDelete }: HistoryCardProps) {
   const [open, setOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(item.thumbnail || null);
   const isOcr = item.category === "image-to-text";
+  const isPdf = item.category === "pdf-operations";
   const canCopyImage =
     item.category === "snapy" || item.category === "remove-text" || item.category === "collage";
   const thumbSrc =
@@ -66,7 +109,9 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
         ? "article"
         : item.category === "snapy"
           ? "dashboard"
-          : "dashboard_customize";
+          : item.category === "pdf-operations"
+            ? "picture_as_pdf"
+            : "dashboard_customize";
 
   function prefetchCopyBlob() {
     if (!copyPath || copyBlobRef.current) return;
@@ -116,10 +161,7 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
         toast.success("Download started.");
         return;
       }
-      const path =
-        item.category === "remove-text" || item.category === "snapy"
-          ? item.resultPath || item.originalPath
-          : item.resultPath || item.originalPath;
+      const path = item.resultPath || item.originalPath;
       if (!path) {
         toast.error("This file is not available to download.");
         return;
@@ -133,6 +175,23 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
     }
   }
 
+  function openPdfOutput() {
+    const path = item.resultPath || item.originalPath;
+    if (!path) {
+      toast.error("This file is not available.");
+      return;
+    }
+    const kind = previewKindForItem(item);
+    openPreviewTab(path, kind, item.name);
+    toast.success(
+      kind === "pdf"
+        ? "Opened PDF in a new tab."
+        : kind === "word"
+          ? "Opened Word preview in a new tab."
+          : "Opened PowerPoint preview in a new tab.",
+    );
+  }
+
   return (
     <article className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden group hover:border-secondary hover-lift relative">
       <div className="aspect-[4/3] bg-surface-container relative">
@@ -141,6 +200,11 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
             <p className="h-full overflow-hidden font-body-md text-body-md text-on-surface whitespace-pre-wrap break-words line-clamp-8">
               {item.extractedText?.trim() || "No text was saved for this item."}
             </p>
+          </div>
+        ) : isPdf ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-on-surface-variant px-4 text-center">
+            <Icon name={icon} size={40} className="text-secondary" />
+            <p className="font-label-sm text-label-sm">{item.description}</p>
           </div>
         ) : liveThumb ? (
           <>
@@ -200,28 +264,20 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
             <Icon name="more_vert" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {item.category === "pdf-operations" ? (
+            {isPdf ? (
               <>
                 <DropdownMenuItem
-                  onClick={() => {
-                    const isWord =
-                      item.description?.toLowerCase().includes("word") ||
-                      item.name?.toLowerCase().includes("word");
-                    
-                    fetch("https://sameerjaiswal.app.n8n.cloud/webhook/pdf-to-word", {
-                      method: "POST",
-                      body: JSON.stringify({ item }),
-                    }).catch(() => {});
-                    
-                    toast.success(`Opening in ${isWord ? "Word" : "PPT"}`);
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    openPdfOutput();
                   }}
                 >
-                  {item.description?.toLowerCase().includes("word") ||
-                  item.name?.toLowerCase().includes("word")
-                    ? "Open in Word"
-                    : "Open in PPT"}
+                  {pdfOpenLabel(item)}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => void downloadItem()}>Download</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void downloadItem()}>Download</DropdownMenuItem>
+                {onDelete ? (
+                  <DropdownMenuItem onSelect={() => onDelete(item)}>Remove</DropdownMenuItem>
+                ) : null}
               </>
             ) : (
               <>
@@ -231,9 +287,9 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
                 {isOcr && item.extractedText ? (
                   <DropdownMenuItem onSelect={() => copyText()}>Copy text</DropdownMenuItem>
                 ) : null}
-                <DropdownMenuItem onClick={() => void downloadItem()}>Download</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void downloadItem()}>Download</DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => {
+                  onSelect={() => {
                     void (async () => {
                       if (isOcr) {
                         setOpen(true);
@@ -250,13 +306,7 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
                   Open
                 </DropdownMenuItem>
                 {onDelete ? (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      onDelete(item);
-                    }}
-                  >
-                    Remove
-                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => onDelete(item)}>Remove</DropdownMenuItem>
                 ) : null}
               </>
             )}
@@ -275,7 +325,9 @@ export function HistoryCard({ item, onDelete }: HistoryCardProps) {
                   ? "Collage"
                   : item.category === "snapy"
                     ? "Snapy"
-                    : "Image to text"}{" "}
+                    : item.category === "pdf-operations"
+                      ? "PDF Operations"
+                      : "Image to text"}{" "}
               · {item.date}
             </DialogDescription>
           </DialogHeader>

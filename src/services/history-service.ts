@@ -124,10 +124,17 @@ async function resolveUserId(fallback?: string) {
   return data.session?.user.id || fallback || null;
 }
 
+export type PdfOperationType = "pdf_to_word" | "pdf_to_pptx" | "pdf_merge";
+
 export type ProcessingHistoryRow = {
   id: string;
   user_id: string;
-  operation_type: "remove_text" | "extract_text" | "collage" | "snapy";
+  operation_type:
+    | "remove_text"
+    | "extract_text"
+    | "collage"
+    | "snapy"
+    | PdfOperationType;
   original_file_name: string;
   original_file_path: string | null;
   result_file_path: string | null;
@@ -159,6 +166,7 @@ export type HistoryStats = {
   extractText: number;
   collages: number;
   snapy: number;
+  pdfOperations: number;
 };
 
 export async function uploadUserFile(path: string, file: Blob, contentType?: string) {
@@ -189,7 +197,7 @@ function extensionFromPath(path: string) {
   const name = path.split("/").pop() || "";
   const ext = name.split(".").pop()?.toLowerCase();
   if (ext === "jpeg") return "jpg";
-  if (ext && ["jpg", "png", "webp"].includes(ext)) return ext;
+  if (ext && ["jpg", "png", "webp", "pdf", "docx", "pptx"].includes(ext)) return ext;
   return "png";
 }
 
@@ -214,6 +222,7 @@ function categoryFromOperation(type: ProcessingHistoryRow["operation_type"]): Hi
   if (type === "remove_text") return "remove-text";
   if (type === "extract_text") return "image-to-text";
   if (type === "snapy") return "snapy";
+  if (type === "pdf_to_word" || type === "pdf_to_pptx" || type === "pdf_merge") return "pdf-operations";
   return "collage";
 }
 
@@ -223,11 +232,22 @@ function descriptionFromRow(row: ProcessingHistoryRow) {
   }
   if (row.operation_type === "collage") return "Created collage";
   if (row.operation_type === "snapy") return "Generated with Snapy";
+  if (row.operation_type === "pdf_to_word") return "Converted PDF to Word";
+  if (row.operation_type === "pdf_to_pptx") return "Converted PDF to PowerPoint";
+  if (row.operation_type === "pdf_merge") return "Merged PDFs";
   return "Removed text from image";
 }
 
 function previewPathForRow(row: ProcessingHistoryRow) {
-  if (row.operation_type === "collage" || row.operation_type === "snapy") return row.result_file_path;
+  if (
+    row.operation_type === "collage" ||
+    row.operation_type === "snapy" ||
+    row.operation_type === "pdf_to_word" ||
+    row.operation_type === "pdf_to_pptx" ||
+    row.operation_type === "pdf_merge"
+  ) {
+    return row.result_file_path;
+  }
   if (row.operation_type === "extract_text") return row.original_file_path ?? row.result_file_path;
   return row.result_file_path ?? row.original_file_path;
 }
@@ -272,7 +292,9 @@ export async function listHistory(
   if (category === "image-to-text") query = query.eq("operation_type", "extract_text");
   if (category === "collage") query = query.eq("operation_type", "collage");
   if (category === "snapy") query = query.eq("operation_type", "snapy");
-  if (category === "pdf-operations") query = query.in("operation_type", ["pdf_to_word", "pdf_to_pptx"]);
+  if (category === "pdf-operations") {
+    query = query.in("operation_type", ["pdf_to_word", "pdf_to_pptx", "pdf_merge"]);
+  }
 
   const { data, error } = await query;
   if (error) throw error;
@@ -284,7 +306,7 @@ export async function listHistory(
 export async function getHistoryStats(userId: string): Promise<HistoryStats> {
   const ownerId = await resolveUserId(userId);
   if (!ownerId) {
-    return { total: 0, removeText: 0, extractText: 0, collages: 0, snapy: 0 };
+    return { total: 0, removeText: 0, extractText: 0, collages: 0, snapy: 0, pdfOperations: 0 };
   }
   const { data, error } = await supabase
     .from("processing_history")
@@ -299,11 +321,20 @@ export async function getHistoryStats(userId: string): Promise<HistoryStats> {
     extractText: rows.filter((row) => row.operation_type === "extract_text").length,
     collages: rows.filter((row) => row.operation_type === "collage").length,
     snapy: rows.filter((row) => row.operation_type === "snapy").length,
+    pdfOperations: rows.filter((row) =>
+      ["pdf_to_word", "pdf_to_pptx", "pdf_merge"].includes(row.operation_type),
+    ).length,
   };
 }
 
 function previewPathForRecord(item: HistoryRecord) {
-  if (item.category === "collage" || item.category === "snapy") return item.resultPath;
+  if (
+    item.category === "collage" ||
+    item.category === "snapy" ||
+    item.category === "pdf-operations"
+  ) {
+    return item.resultPath;
+  }
   if (item.category === "image-to-text") return item.originalPath ?? item.resultPath;
   return item.resultPath ?? item.originalPath;
 }
@@ -326,7 +357,7 @@ export async function signHistoryRecords(items: HistoryRecord[]): Promise<Histor
 
 export async function createHistoryRecord(input: {
   userId: string;
-  operationType: "remove_text" | "extract_text" | "collage" | "snapy";
+  operationType: ProcessingHistoryRow["operation_type"];
   originalFileName: string;
   originalFilePath?: string | null;
   resultFilePath?: string | null;
@@ -474,4 +505,62 @@ export async function saveSnapyResult(input: {
     metadata: { prompt, source: "snapy" },
   });
   return resultPath;
+}
+
+const PDF_RESULT_MIME: Record<PdfOperationType, string> = {
+  pdf_to_word: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  pdf_to_pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  pdf_merge: "application/pdf",
+};
+
+const PDF_RESULT_EXT: Record<PdfOperationType, string> = {
+  pdf_to_word: "docx",
+  pdf_to_pptx: "pptx",
+  pdf_merge: "pdf",
+};
+
+function pdfFolder(type: PdfOperationType) {
+  if (type === "pdf_to_word") return "pdf-to-word";
+  if (type === "pdf_to_pptx") return "pdf-to-pptx";
+  return "pdf-merge";
+}
+
+export async function savePdfResult(input: {
+  userId?: string;
+  operationType: PdfOperationType;
+  fileName: string;
+  resultBlob: Blob;
+  metadata?: Record<string, unknown>;
+}) {
+  const userId = await resolveUserId(input.userId);
+  if (!userId) {
+    throw new Error("You need to be signed in to save this to History.");
+  }
+  if (!input.resultBlob || input.resultBlob.size <= 0) {
+    throw new Error("No output file to save.");
+  }
+
+  const ext = PDF_RESULT_EXT[input.operationType];
+  const contentType = input.resultBlob.type || PDF_RESULT_MIME[input.operationType];
+  const safeBase =
+    input.fileName.replace(/\.[^.]+$/, "").replace(/[^\w.\-()+ ]+/g, "_").slice(0, 80) || "document";
+  const displayName = `${safeBase}.${ext}`;
+  const path = `${userId}/${pdfFolder(input.operationType)}/${newFileId()}.${ext}`;
+  const blob = new Blob([new Uint8Array(await input.resultBlob.arrayBuffer())], { type: contentType });
+
+  await uploadBlob(path, blob, contentType);
+  await createHistoryRecord({
+    userId,
+    operationType: input.operationType,
+    originalFileName: displayName,
+    originalFilePath: null,
+    resultFilePath: path,
+    status: "completed",
+    metadata: {
+      source: "pdf-operations",
+      operation: input.operationType,
+      ...(input.metadata ?? {}),
+    },
+  });
+  return path;
 }

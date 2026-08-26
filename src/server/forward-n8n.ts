@@ -199,30 +199,69 @@ export async function forwardPdfToN8n(
   request: Request,
   webhookUrl: string | string[],
 ): Promise<Response> {
+  if (!(await isAuthenticatedRequest(request))) {
+    return Response.json({ success: false, error: "Sign in to convert PDFs." }, { status: 401 });
+  }
+
   const urls = webhookCandidates(webhookUrl);
   if (!urls.length) {
     return Response.json({ success: false, error: "No webhook URL configured" }, { status: 503 });
   }
 
-  let incoming: FormData;
+  const contentType = request.headers.get("content-type") ?? "";
+  let filename = "document.pdf";
+  let fileBuffer: ArrayBuffer | null = null;
+  let cleanupPath: string | null = null;
+  const token = bearerToken(request);
+
   try {
-    incoming = await request.formData();
-  } catch {
-    return Response.json({ success: false, error: "Invalid form data" }, { status: 400 });
+    if (contentType.includes("application/json")) {
+      const payload = (await request.json()) as { path?: unknown; filename?: unknown };
+      const path = typeof payload.path === "string" ? payload.path.trim() : "";
+      if (!path) {
+        return Response.json({ success: false, error: "No PDF path provided" }, { status: 400 });
+      }
+      if (!isSafeUserStoragePath(path, await userIdFromToken(token))) {
+        return Response.json({ success: false, error: "Invalid PDF path" }, { status: 403 });
+      }
+      const downloaded = await downloadStoragePdf(path, token);
+      fileBuffer = downloaded.buffer;
+      filename =
+        typeof payload.filename === "string" && payload.filename.trim()
+          ? payload.filename.trim()
+          : downloaded.filename;
+      cleanupPath = path;
+    } else {
+      let incoming: FormData;
+      try {
+        incoming = await request.formData();
+      } catch {
+        return Response.json({ success: false, error: "Invalid form data" }, { status: 400 });
+      }
+      const file = incoming.get("file") ?? incoming.get("data");
+      if (!(file instanceof Blob) || file.size <= 0) {
+        return Response.json({ success: false, error: "No PDF file provided" }, { status: 400 });
+      }
+      filename = file instanceof File && file.name ? file.name : "document.pdf";
+      fileBuffer = await file.arrayBuffer();
+    }
+  } catch (error) {
+    return Response.json(
+      { success: false, error: error instanceof Error ? error.message : "Could not read PDF." },
+      { status: 400 },
+    );
   }
 
-  const file = incoming.get("file") ?? incoming.get("data");
-  if (!(file instanceof Blob) || file.size <= 0) {
+  if (!fileBuffer || fileBuffer.byteLength <= 0) {
     return Response.json({ success: false, error: "No PDF file provided" }, { status: 400 });
   }
 
-  const filename = file instanceof File && file.name ? file.name : "document.pdf";
-  const fileBuffer = await file.arrayBuffer();
   let lastResponse: Response | null = null;
 
   for (const url of urls) {
     const outbound = new FormData();
-    const blob = new Blob([fileBuffer], { type: file.type || "application/pdf" });
+    const blob = new Blob([new Uint8Array(fileBuffer)], { type: "application/pdf" });
+    // Keep both field names for n8n workflows that expect either `file` or `data`.
     outbound.append("file", blob, filename);
     outbound.append("data", blob, filename);
 
@@ -231,7 +270,7 @@ export async function forwardPdfToN8n(
 
     try {
       if (import.meta.env.DEV) {
-        console.info(`[SnapCut] Forwarding PDF (${filename}, ${file.size} bytes) to n8n: ${url}`);
+        console.info(`[SnapCut] Forwarding PDF (${filename}, ${fileBuffer.byteLength} bytes) to n8n`);
       }
 
       const upstream = await fetch(encodeURI(url), {
@@ -240,20 +279,17 @@ export async function forwardPdfToN8n(
         signal: controller.signal,
       });
 
-      const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
+      const upstreamType = upstream.headers.get("content-type") ?? "application/octet-stream";
       const body = await upstream.arrayBuffer();
-
-      if (import.meta.env.DEV) {
-        console.info(`[SnapCut] n8n response: status=${upstream.status}, content-type=${contentType}, size=${body.byteLength}`);
-      }
 
       lastResponse = new Response(body, {
         status: upstream.status,
         statusText: upstream.statusText,
-        headers: { "content-type": contentType },
+        headers: { "content-type": upstreamType },
       });
 
       if (upstream.ok || ![404, 405, 502, 503, 504].includes(upstream.status)) {
+        if (cleanupPath) void removeStoragePaths([cleanupPath], token);
         return lastResponse;
       }
     } catch (error) {
@@ -267,6 +303,7 @@ export async function forwardPdfToN8n(
     }
   }
 
+  if (cleanupPath) void removeStoragePaths([cleanupPath], token);
   return lastResponse ?? Response.json({ success: false, error: "Conversion failed" }, { status: 502 });
 }
 
@@ -274,25 +311,60 @@ export async function forwardPdfMergeToN8n(
   request: Request,
   webhookUrl: string | string[],
 ): Promise<Response> {
+  if (!(await isAuthenticatedRequest(request))) {
+    return Response.json({ success: false, error: "Sign in to merge PDFs." }, { status: 401 });
+  }
+
   const urls = webhookCandidates(webhookUrl);
   if (!urls.length) {
     return Response.json({ success: false, error: "No webhook URL configured" }, { status: 503 });
   }
 
-  let incoming: FormData;
-  try {
-    incoming = await request.formData();
-  } catch {
-    return Response.json({ success: false, error: "Invalid form data" }, { status: 400 });
-  }
-
+  const contentType = request.headers.get("content-type") ?? "";
+  const token = bearerToken(request);
   const allFiles: Array<{ blob: Blob; name: string }> = [];
+  let cleanupPaths: string[] = [];
 
-  for (const [key, value] of incoming.entries()) {
-    if (value instanceof Blob && value.size > 0) {
-      const filename = value instanceof File && value.name ? value.name : `${key}.pdf`;
-      allFiles.push({ blob: value, name: filename });
+  try {
+    if (contentType.includes("application/json")) {
+      const payload = (await request.json()) as { paths?: unknown };
+      const paths = Array.isArray(payload.paths)
+        ? payload.paths.filter((path): path is string => typeof path === "string" && path.trim().length > 0)
+        : [];
+      if (!paths.length) {
+        return Response.json({ success: false, error: "No PDF paths provided" }, { status: 400 });
+      }
+      const uid = await userIdFromToken(token);
+      for (const path of paths) {
+        if (!isSafeUserStoragePath(path, uid)) {
+          return Response.json({ success: false, error: "Invalid PDF path" }, { status: 403 });
+        }
+        const downloaded = await downloadStoragePdf(path, token);
+        allFiles.push({
+          blob: new Blob([downloaded.buffer], { type: "application/pdf" }),
+          name: downloaded.filename,
+        });
+      }
+      cleanupPaths = paths;
+    } else {
+      let incoming: FormData;
+      try {
+        incoming = await request.formData();
+      } catch {
+        return Response.json({ success: false, error: "Invalid form data" }, { status: 400 });
+      }
+      for (const [key, value] of incoming.entries()) {
+        if (value instanceof Blob && value.size > 0) {
+          const filename = value instanceof File && value.name ? value.name : `${key}.pdf`;
+          allFiles.push({ blob: value, name: filename });
+        }
+      }
     }
+  } catch (error) {
+    return Response.json(
+      { success: false, error: error instanceof Error ? error.message : "Could not read PDFs." },
+      { status: 400 },
+    );
   }
 
   if (allFiles.length === 0) {
@@ -303,12 +375,10 @@ export async function forwardPdfMergeToN8n(
 
   for (const url of urls) {
     const outbound = new FormData();
-
+    // Send each PDF once. Dual field names (`files` + `file_N`) made n8n
+    // merge every file twice (e.g. 2+3+1 pages became 12 instead of 6).
     allFiles.forEach((fileItem, idx) => {
-      outbound.append("files", fileItem.blob, fileItem.name);
-      outbound.append("data", fileItem.blob, fileItem.name);
       outbound.append(`file_${idx + 1}`, fileItem.blob, fileItem.name);
-      outbound.append(`file${idx + 1}`, fileItem.blob, fileItem.name);
     });
 
     const controller = new AbortController();
@@ -316,7 +386,7 @@ export async function forwardPdfMergeToN8n(
 
     try {
       if (import.meta.env.DEV) {
-        console.info(`[SnapCut] Forwarding ${allFiles.length} PDFs to n8n merge webhook: ${url}`);
+        console.info(`[SnapCut] Forwarding ${allFiles.length} PDFs to n8n merge webhook`);
       }
 
       const upstream = await fetch(encodeURI(url), {
@@ -325,20 +395,17 @@ export async function forwardPdfMergeToN8n(
         signal: controller.signal,
       });
 
-      const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
+      const upstreamType = upstream.headers.get("content-type") ?? "application/octet-stream";
       const body = await upstream.arrayBuffer();
-
-      if (import.meta.env.DEV) {
-        console.info(`[SnapCut] n8n merge response: status=${upstream.status}, content-type=${contentType}, size=${body.byteLength}`);
-      }
 
       lastResponse = new Response(body, {
         status: upstream.status,
         statusText: upstream.statusText,
-        headers: { "content-type": contentType },
+        headers: { "content-type": upstreamType },
       });
 
       if (upstream.ok || ![404, 405, 502, 503, 504].includes(upstream.status)) {
+        if (cleanupPaths.length) void removeStoragePaths(cleanupPaths, token);
         return lastResponse;
       }
     } catch (error) {
@@ -352,7 +419,57 @@ export async function forwardPdfMergeToN8n(
     }
   }
 
+  if (cleanupPaths.length) void removeStoragePaths(cleanupPaths, token);
   return lastResponse ?? Response.json({ success: false, error: "Merge failed" }, { status: 502 });
+}
+
+function bearerToken(request: Request) {
+  const header = request.headers.get("authorization") ?? "";
+  return header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
+}
+
+async function userIdFromToken(token: string) {
+  if (!token) return null;
+  const { url, anonKey } = getSupabasePublicConfig();
+  if (!url || !anonKey) return null;
+  const client = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data } = await client.auth.getUser(token);
+  return data.user?.id ?? null;
+}
+
+function isSafeUserStoragePath(path: string, userId: string | null) {
+  if (!userId) return false;
+  if (path.includes("..") || path.startsWith("/") || path.includes("\\")) return false;
+  return path.startsWith(`${userId}/pdf-jobs/`);
+}
+
+async function downloadStoragePdf(path: string, token: string) {
+  const { url, anonKey } = getSupabasePublicConfig();
+  if (!url || !anonKey || !token) throw new Error("Storage is not configured.");
+  const client = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data, error } = await client.storage.from("snapcut-history").download(path);
+  if (error || !data) throw new Error(error?.message || "Could not load uploaded PDF.");
+  const buffer = await data.arrayBuffer();
+  const filename = path.split("/").pop() || "document.pdf";
+  return { buffer, filename: filename.replace(/^[0-9a-f-]{36}-/i, "") || "document.pdf" };
+}
+
+async function removeStoragePaths(paths: string[], token: string) {
+  const unique = [...new Set(paths.filter(Boolean))];
+  if (!unique.length || !token) return;
+  const { url, anonKey } = getSupabasePublicConfig();
+  if (!url || !anonKey) return;
+  const client = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  await client.storage.from("snapcut-history").remove(unique);
 }
 
 

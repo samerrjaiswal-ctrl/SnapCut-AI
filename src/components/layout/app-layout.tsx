@@ -12,27 +12,35 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
-const MAIN_BY_PATH: Record<string, string> = {
-  "/dashboard": "p-container-margin-mobile md:p-container-margin-desktop",
-  "/history": "p-container-margin-mobile md:p-container-margin-desktop",
-  "/remove-text": "flex flex-col min-h-screen",
-  "/image-to-text": "flex flex-col min-h-screen",
-  "/pdf-to-word": "flex flex-col min-h-screen",
-  "/pdf-to-pptx": "flex flex-col min-h-screen",
-  "/pdf-merger": "flex flex-col min-h-screen",
-};
-
-export const APP_SHELL_PATHS = new Set([
+const PADDED_EXACT = new Set([
   "/dashboard",
-  "/remove-text",
-  "/image-to-text",
-  "/collage-maker",
-  "/pdf-to-word",
-  "/pdf-to-pptx",
-  "/pdf-merger",
   "/history",
-  "/settings",
+  "/image-ai",
+  "/pdf-operations",
+  "/creative-ai",
+  "/ai-productivity",
 ]);
+
+function mainClassForPath(pathname: string) {
+  const normalized = pathname.replace(/\/$/, "") || "/";
+  if (PADDED_EXACT.has(pathname) || PADDED_EXACT.has(normalized)) {
+    return "p-container-margin-mobile md:p-container-margin-desktop";
+  }
+  if (
+    normalized.startsWith("/image-ai/") ||
+    normalized.startsWith("/pdf-operations/") ||
+    normalized.startsWith("/creative-ai/") ||
+    normalized.startsWith("/ai-productivity/") ||
+    normalized === "/remove-text" ||
+    normalized === "/image-to-text" ||
+    normalized === "/pdf-to-word" ||
+    normalized === "/pdf-to-pptx" ||
+    normalized === "/pdf-merger"
+  ) {
+    return "flex flex-col min-h-screen";
+  }
+  return "";
+}
 
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -83,7 +91,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               ? "flex flex-col h-full min-h-0 overflow-hidden pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0"
               : cn(
                   "min-h-screen pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-container-margin-desktop",
-                  MAIN_BY_PATH[pathname],
+                  mainClassForPath(pathname),
                 ),
           )}
         >

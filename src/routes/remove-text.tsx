@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/snapcut/page-header";
+import { ToolBreadcrumb } from "@/components/snapcut/tool-breadcrumb";
 import { UploadArea } from "@/components/snapcut/upload-area";
 import { ProcessingState, ErrorState } from "@/components/snapcut/states";
 import { Icon } from "@/components/snapcut/icon";
@@ -136,10 +137,19 @@ function RemoveTextPage() {
     <>
       <div className="px-container-margin-mobile md:px-container-margin-desktop py-6 md:py-12">
           <div className="w-full flex flex-col gap-4 md:gap-6 md:flex-row md:items-end md:justify-between min-w-0">
-            <PageHeader
-              title="Remove Text"
-              description="Erase unwanted text or watermarks while preserving the original background."
-            />
+            <div className="min-w-0">
+              <ToolBreadcrumb
+                items={[
+                  { label: "Dashboard", to: "/dashboard" },
+                  { label: "Image AI", to: "/image-ai" },
+                  { label: "Remove Text" },
+                ]}
+              />
+              <PageHeader
+                title="Remove Text"
+                description="Erase unwanted text or watermarks while preserving the original background."
+              />
+            </div>
             <ToolActions
               actionLabel="Remove Text"
               actionIcon="ink_eraser"

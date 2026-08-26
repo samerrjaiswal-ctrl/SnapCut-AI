@@ -7,7 +7,7 @@ const MOBILE_ITEMS = [
     to: "/dashboard",
     label: "Tools",
     icon: "auto_fix_high",
-    match: [
+    matchPrefix: [
       "/dashboard",
       "/remove-text",
       "/image-to-text",
@@ -15,10 +15,14 @@ const MOBILE_ITEMS = [
       "/pdf-to-word",
       "/pdf-to-pptx",
       "/pdf-merger",
+      "/pdf-operations",
+      "/image-ai",
+      "/creative-ai",
+      "/ai-productivity",
     ],
   },
-  { to: "/history", label: "History", icon: "history", match: ["/history"] },
-  { to: "/settings", label: "Account", icon: "person", match: ["/settings"] },
+  { to: "/history", label: "History", icon: "history", matchPrefix: ["/history"] },
+  { to: "/settings", label: "Account", icon: "person", matchPrefix: ["/settings"] },
 ] as const;
 
 type MobileNavProps = {
@@ -32,7 +36,9 @@ export function MobileNav({ activePath }: MobileNavProps) {
       aria-label="Primary"
     >
       {MOBILE_ITEMS.map((item) => {
-        const active = item.match.some((path) => activePath === path || activePath.startsWith(`${path}/`));
+        const active = item.matchPrefix.some(
+          (path) => activePath === path || activePath.startsWith(`${path}/`),
+        );
 
         return (
           <Link

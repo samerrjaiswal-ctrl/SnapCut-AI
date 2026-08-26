@@ -158,12 +158,14 @@ function LandingPage() {
                   <ToolCardBody tool={tool} />
                 </Link>
               ) : (
-                <div
+                <Link
                   key={tool.to}
-                  className="bg-surface rounded-xl border border-outline-variant p-8 flex flex-col gap-6 text-left opacity-80"
+                  to="/login"
+                  preload="intent"
+                  className="bg-surface rounded-xl border border-outline-variant p-8 flex flex-col gap-6 text-left opacity-80 hover-lift"
                 >
                   <ToolCardBody tool={tool} locked />
-                </div>
+                </Link>
               ),
             )}
           </div>
