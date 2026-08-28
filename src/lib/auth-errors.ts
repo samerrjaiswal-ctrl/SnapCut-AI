@@ -6,6 +6,16 @@ export function getAuthErrorMessage(error: unknown, fallback: string): string {
   const message = typeof authError.message === "string" ? authError.message.toLowerCase() : "";
   const code = typeof authError.code === "string" ? authError.code.toLowerCase() : "";
 
+  if (
+    message.includes("abort") ||
+    message.includes("aborted") ||
+    message.includes("taking too long") ||
+    message.includes("timeout") ||
+    message.includes("timed out") ||
+    code === "authretryablefetcherror"
+  ) {
+    return "Authentication is taking too long. Wait a minute and try again.";
+  }
   if (message.includes("invalid login credentials")) {
     return "Email or password is incorrect.";
   }

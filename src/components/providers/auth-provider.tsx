@@ -11,7 +11,12 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 import { clearPasswordRecovery } from "@/lib/auth-recovery";
-import { getAuthRedirectTo, isSupabaseConfigured, supabase } from "@/lib/supabase";
+import {
+  clearPersistedSupabaseSession,
+  getAuthRedirectTo,
+  isSupabaseConfigured,
+  supabase,
+} from "@/lib/supabase";
 
 export type AppSession = {
   userId: string;
@@ -58,6 +63,40 @@ function fallbackSession(user: User): AppSession {
     plan: "free",
     twoFactorEnabled: false,
   };
+}
+
+const AUTH_BUSY = "Authentication is taking too long. Wait a minute and try again.";
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, message = AUTH_BUSY): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(message)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function signOutCurrentDevice(timeoutMs = 2500) {
+  try {
+    supabase.auth.stopAutoRefresh();
+  } catch {
+    // Client still signs out locally below.
+  }
+  clearPersistedSupabaseSession();
+  const result = await Promise.race([
+    supabase.auth.signOut({ scope: "local" }).then(() => "done" as const),
+    new Promise<"timeout">((resolve) => {
+      setTimeout(() => resolve("timeout"), timeoutMs);
+    }),
+  ]);
+  if (result === "timeout") {
+    clearPersistedSupabaseSession();
+  }
 }
 
 async function sessionFromUser(user: User): Promise<AppSession> {
@@ -127,9 +166,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         // Validate the session; clear stale refresh tokens that otherwise spam 400s.
-        const { error: userError } = await supabase.auth.getUser();
+        const { error: userError } = await withTimeout(supabase.auth.getUser(), 4000).catch(() => ({
+          error: { message: "timeout" },
+        }));
         if (userError) {
-          await supabase.auth.signOut({ scope: "local" });
+          await signOutCurrentDevice();
           await applyAuth(null);
           return;
         }
@@ -156,10 +197,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) {
       throw new Error("Authentication is not configured yet.");
     }
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
+    const { data, error } = await withTimeout(
+      supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      }),
+      10000,
+    );
     if (error) throw new Error(getAuthErrorMessage(error, "Unable to sign in. Please try again."));
     if (!data.user) throw new Error("Unable to sign in. Please try again.");
     const next = await sessionFromUser(data.user);
@@ -175,13 +219,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const redirectTo = getAuthRedirectTo();
     holdGuestRef.current = true;
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: redirectTo
-          ? { data: { full_name: name }, emailRedirectTo: redirectTo }
-          : { data: { full_name: name } },
-      });
+      const { data, error } = await withTimeout(
+        supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: redirectTo
+            ? { data: { full_name: name }, emailRedirectTo: redirectTo }
+            : { data: { full_name: name } },
+        }),
+        10000,
+      );
       if (error) throw new Error(getAuthErrorMessage(error, "Unable to create account. Please try again."));
       const alreadyRegistered =
         Boolean(data.user) && Array.isArray(data.user.identities) && data.user.identities.length === 0;
@@ -189,7 +236,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("An account with this email already exists. Try logging in.");
       }
       if (data.session) {
-        await supabase.auth.signOut();
+        await signOutCurrentDevice();
       }
       setUser(null);
       setSession(null);
@@ -233,7 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       throw new Error(getAuthErrorMessage(error, "Unable to update password. Please try again."));
     }
-    await supabase.auth.signOut();
+    await signOutCurrentDevice();
     setUser(null);
     setSession(null);
     clearPasswordRecovery();
@@ -255,13 +302,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // Session can already be gone after account deletion.
-    }
+    holdGuestRef.current = true;
     setUser(null);
     setSession(null);
+    clearPersistedSupabaseSession();
+    try {
+      await signOutCurrentDevice();
+    } catch {
+      clearPersistedSupabaseSession();
+    } finally {
+      setUser(null);
+      setSession(null);
+      holdGuestRef.current = false;
+    }
   }, []);
 
   const completeMfa = useCallback(() => undefined, []);
@@ -304,10 +357,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updatePassword = useCallback(
     async (currentPassword: string, nextPassword: string) => {
       if (!session?.email) throw new Error("You need to be signed in to change your password.");
-      const { error: reauthError } = await supabase.auth.signInWithPassword({
-        email: session.email,
-        password: currentPassword,
-      });
+      const { error: reauthError } = await withTimeout(
+        supabase.auth.signInWithPassword({
+          email: session.email,
+          password: currentPassword,
+        }),
+        10000,
+      );
       if (reauthError) throw new Error("Current password is incorrect.");
       const { error } = await supabase.auth.updateUser({ password: nextPassword });
       if (error) throw new Error(getAuthErrorMessage(error, "Unable to update password. Please try again."));
